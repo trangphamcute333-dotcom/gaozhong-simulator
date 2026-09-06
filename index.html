@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎒 高中生涯模拟器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(180deg,#f7f4ea 0%,#eef3ec 100%);background-attachment:fixed;color:#2d3748;min-height:100vh;font-size:16px}
+#app{max-width:560px;margin:0 auto;padding:16px 16px 56px}
+.screen{display:none}
+.screen.active{display:block;animation:fadein .35s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 14px rgba(45,55,72,.08);margin-bottom:14px}
+h1{font-size:29px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
+.sub{text-align:center;color:#718096;font-size:13.5px;margin-bottom:18px}
+.row-label{font-size:13px;color:#718096;font-weight:600;margin:4px 0 8px}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:12px;font-size:16px;cursor:pointer;font-weight:600;font-family:inherit}
+.btn.primary{background:#2f855a;color:#fff;box-shadow:0 3px 10px rgba(47,133,90,.3)}
+.btn.primary:active{background:#276749}
+.btn.ghost{background:#fff;color:#2f855a;border:1.5px solid #2f855a;width:auto;padding:10px 16px;font-size:14px;font-weight:600}
+.btn.ghost:active{background:#f0fff4}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.diff-group{display:flex;gap:8px;margin-bottom:14px}
+.diff-btn{flex:1;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 6px;cursor:pointer;text-align:center;font-family:inherit;transition:all .15s}
+.diff-btn .dname{font-size:15px;font-weight:700}
+.diff-btn .ddesc{font-size:11px;color:#718096;margin-top:2px;line-height:1.4;white-space:pre-line}
+.diff-btn.sel{background:#f0fff4;border-color:#2f855a;color:#276749}
+.diff-btn.sel .ddesc{color:#4a5568}
+.seed-row{display:flex;gap:8px;margin-bottom:16px}
+.seed-row input{flex:1;padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:16px;font-family:inherit;background:#fff;outline:none}
+.seed-row input:focus{border-color:#2f855a}
+.seed-row button{background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:0 14px;font-size:18px;cursor:pointer}
+/* 出身选择 */
+.origin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:420px){.origin-grid{grid-template-columns:1fr}}
+.origin-card{background:#fff;border:2px solid #e2e8f0;border-radius:14px;padding:14px 12px;cursor:pointer;transition:all .15s;text-align:left;font-family:inherit;position:relative}
+.origin-card:active{transform:scale(.97)}
+.origin-card.sel{border-color:#2f855a;background:#f0fff4;box-shadow:0 3px 12px rgba(47,133,90,.25)}
+.origin-card .oicon{font-size:26px}
+.origin-card .oname{font-size:16px;font-weight:700;margin:4px 0 2px}
+.origin-card .otag{display:inline-block;font-size:11px;color:#dd6b20;background:#fffaf0;border:1px solid #feebc8;border-radius:20px;padding:1px 8px;margin-bottom:6px}
+.origin-card .odesc{font-size:12px;color:#718096;line-height:1.5}
+.origin-card .ostats{font-size:11px;color:#4a5568;margin-top:8px;line-height:1.7}
+/* 游戏主界面 */
+.game-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sem-badge{background:#2f855a;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:600}
+.sem-badge small{font-weight:400;opacity:.85}
+.dots{display:flex;gap:5px}
+.dot{width:9px;height:9px;border-radius:50%;background:#cbd5e0}
+.dot.done{background:#2f855a}
+.dot.cur{background:#dd6b20;box-shadow:0 0 0 3px rgba(221,107,32,.25)}
+.school-line{text-align:center;color:#718096;font-size:12.5px;margin-bottom:12px}
+.stat-row{display:flex;align-items:center;gap:8px;padding:7px 0}
+.stat-icon{width:26px;text-align:center;font-size:16px}
+.stat-name{width:66px;font-size:13.5px;color:#4a5568;font-weight:600}
+.stat-bar{flex:1;height:10px;background:#edf2f7;border-radius:6px;overflow:hidden}
+.stat-fill{height:100%;border-radius:6px;transition:width .5s ease;min-width:0}
+.stat-val{width:36px;text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.stat-delta{position:absolute;opacity:0;font-size:12px;font-weight:700;pointer-events:none}
+@keyframes floatup{0%{opacity:0;transform:translateY(4px)}20%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+.stat-row{position:relative}
+.delta-chip{position:absolute;right:40px;font-size:12px;font-weight:800;animation:floatup 1.5s ease forwards;pointer-events:none}
+.delta-chip.up{color:#276749}
+.delta-chip.down{color:#c53030}
+.flags-line{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.flag-chip{font-size:11.5px;background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:20px;padding:2px 9px}
+.event-card{padding:20px}
+.event-sem-tag{font-size:12px;color:#718096;margin-bottom:6px}
+.event-title{font-size:20px;font-weight:700;margin-bottom:10px;line-height:1.4}
+.event-desc{font-size:15px;color:#4a5568;line-height:1.75;margin-bottom:16px}
+.opt-btn{display:block;width:100%;text-align:left;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:15px;line-height:1.5;cursor:pointer;font-family:inherit;transition:all .12s;color:#2d3748}
+.opt-btn:last-child{margin-bottom:0}
+.opt-btn:active:not(:disabled){border-color:#2f855a;background:#f0fff4;transform:scale(.98)}
+.opt-btn:disabled{opacity:.5;border-style:dashed;cursor:not-allowed}
+.fx-line{font-size:12px;color:#718096;margin-top:5px}
+.fx-line b{font-weight:700}
+.need-line{font-size:12px;color:#e53e3e;margin-top:5px;font-weight:600}
+/* 考试/结局 */
+.exam-center{text-align:center;padding:26px 18px}
+.exam-emoji{font-size:44px}
+.exam-name{font-size:15px;color:#718096;margin:8px 0 2px}
+.exam-score{font-size:64px;font-weight:800;color:#2f855a;line-height:1.1;font-variant-numeric:tabular-nums}
+.exam-score small{font-size:22px;color:#718096;font-weight:600}
+.exam-rank{font-size:14px;color:#dd6b20;font-weight:600;margin-top:4px}
+.exam-notes{font-size:13.5px;color:#4a5568;line-height:1.8;margin-top:12px;text-align:left}
+.exam-notes li{margin-left:18px}
+.ending-icon{font-size:52px;text-align:center}
+.ending-name{font-size:26px;font-weight:800;text-align:center;margin:8px 0}
+.ending-desc{font-size:15px;color:#4a5568;text-align:center;line-height:1.8}
+.name-row{display:flex;gap:8px;margin-bottom:12px}
+.name-row input{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;outline:none;text-align:center}
+.name-row input:focus{border-color:#2f855a}
+.card-img{width:100%;border-radius:14px;box-shadow:0 4px 18px rgba(45,55,72,.18);display:block}
+.save-hint{text-align:center;font-size:12.5px;color:#718096;margin:8px 0 4px}
+/* 概率抽奖动画 */
+#roll-overlay{position:fixed;inset:0;background:rgba(26,32,44,.55);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#roll-overlay.show{display:flex}
+.roll-card{background:#fff;border-radius:20px;max-width:440px;width:100%;padding:22px 18px 16px;text-align:center;animation:fadein .25s ease;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.roll-title{font-size:21px;font-weight:800;margin-bottom:4px}
+.roll-sub{font-size:13px;color:#718096;margin-bottom:14px;line-height:1.5}
+.roll-window{font-size:19px;font-weight:700;color:#2d3748;background:#f7fafc;border:2px dashed #e2e8f0;border-radius:14px;padding:16px 12px;margin-bottom:14px;min-height:62px;display:flex;align-items:center;justify-content:center;transition:border-color .25s,background .25s,color .25s}
+.roll-window.pop{animation:rollpop .15s ease}
+@keyframes rollpop{0%{transform:scale(.93);opacity:.5}100%{transform:scale(1);opacity:1}}
+.roll-window.hit{border-style:solid;border-color:#2f855a;background:#f0fff4;color:#276749;animation:hitpulse .5s ease}
+@keyframes hitpulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+.roll-list{text-align:left;margin-bottom:6px}
+.roll-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:10px;margin-bottom:6px;font-size:14px;color:#4a5568;background:#f7fafc;border:1.5px solid transparent;transition:all .12s}
+.roll-row.active{background:#f0fff4;border-color:#2f855a;color:#276749;font-weight:700}
+.roll-row.hit{background:#c6f6d5;border-color:#2f855a}
+.roll-row .rp{color:#a0aec0;font-size:12px;font-weight:600}
+.roll-result{font-size:15px;font-weight:700;color:#2f855a;min-height:24px;margin-top:8px}
+.roll-tip{font-size:11.5px;color:#a0aec0;margin-top:8px}
+/* 弹窗 */
+#modal-overlay{position:fixed;inset:0;background:rgba(26,32,44,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+#modal-overlay.show{display:flex}
+.modal-card{background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:86vh;overflow-y:auto;padding:20px 18px;position:relative;animation:fadein .25s ease}
+.modal-close{position:sticky;top:0;float:right;background:none;border:none;font-size:24px;cursor:pointer;color:#718096;line-height:1;margin:-4px -6px 0 0}
+.modal-title{font-size:19px;font-weight:800;margin-bottom:12px}
+.end-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:420px){.end-grid{grid-template-columns:1fr}}
+.end-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px}
+.end-item.unlocked{background:#f0fff4;border-color:#c6f6d5}
+.end-item.locked{background:#f7fafc;opacity:.75}
+.end-item .ename{font-size:14.5px;font-weight:700}
+.end-item .eicon{font-size:22px;margin-right:4px}
+.end-item .ehint{font-size:11.5px;color:#718096;margin-top:4px;line-height:1.5}
+.rec-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 13px;margin-bottom:8px;font-size:13.5px;line-height:1.7}
+.rec-item b{font-size:14.5px}
+.help-block{font-size:14px;color:#4a5568;line-height:1.8;margin-bottom:12px}
+.help-block b{color:#2d3748}
+.small-link{font-size:12.5px;color:#718096;text-align:center;margin-top:14px}
+.footer-note{text-align:center;color:#a0aec0;font-size:12px;margin-top:26px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 主页 -->
+  <div id="screen-home" class="screen active">
+    <h1>🎒 高中生涯模拟器</h1>
+    <p class="sub">从踏入校门到高考落幕 · 六个学期 · 一段青春</p>
+    <div class="card">
+      <div class="row-label">选择难度</div>
+      <div class="diff-group" id="diff-group"></div>
+      <div class="row-label">生涯种子(同一种子 = 同一段人生)</div>
+      <div class="seed-row">
+        <input id="seed-input" inputmode="numeric" maxlength="9" placeholder="留空则随机">
+        <button id="seed-dice" title="随机种子">🎲</button>
+      </div>
+      <button class="btn primary" id="btn-start">🎬 开始生涯</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn ghost" id="btn-endings">📖 结局图鉴</button>
+      <button class="btn ghost" id="btn-records">🗂 生涯档案</button>
+      <button class="btn ghost" id="btn-help">❓ 玩法说明</button>
+    </div>
+    <p class="footer-note">纯前端小游戏 · 数据保存在本机浏览器</p>
+  </div>
+
+  <!-- 出身选择 -->
+  <div id="screen-origin" class="screen">
+    <h1 style="font-size:23px">🚪 选择你的出身</h1>
+    <p class="sub" id="origin-sub">出身决定起点,但决定不了终点</p>
+    <div class="origin-grid" id="origin-grid"></div>
+    <button class="btn primary" id="btn-origin-ok" style="margin-top:14px" disabled>✅ 确认出身,开启高中生活</button>
+  </div>
+
+  <!-- 游戏主界面 -->
+  <div id="screen-game" class="screen">
+    <div class="game-top">
+      <div class="sem-badge" id="sem-badge"></div>
+      <div class="dots" id="sem-dots"></div>
+    </div>
+    <div class="school-line" id="school-line"></div>
+    <div class="card" id="stats-panel"></div>
+    <div class="card event-card" id="event-panel"></div>
+  </div>
+
+  <!-- 考试结算 -->
+  <div id="screen-exam" class="screen">
+    <div class="card exam-center" id="exam-panel"></div>
+  </div>
+
+  <!-- 结局 -->
+  <div id="screen-ending" class="screen">
+    <div class="card">
+      <div class="ending-icon" id="ending-icon"></div>
+      <div class="ending-name" id="ending-name"></div>
+      <div class="ending-desc" id="ending-desc"></div>
+    </div>
+    <div class="card">
+      <div class="row-label">在总结卡片上留下你的名字</div>
+      <div class="name-row">
+        <input id="name-input" placeholder="输入名字,不填则不显示" maxlength="10">
+      </div>
+      <img class="card-img" id="card-img" alt="生涯总结卡片">
+      <p class="save-hint">💾 长按上方图片 → 保存图片 / 分享给朋友</p>
+    </div>
+    <button class="btn primary" id="btn-again">🔄 同种子再来一局</button>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn ghost" id="btn-rehome">🏠 回到主页</button>
+      <button class="btn ghost" id="btn-ending-compendium">📖 查看图鉴</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 概率抽奖动画 -->
+<div id="roll-overlay">
+  <div class="roll-card">
+    <div class="roll-title">🎰 命运的骰子</div>
+    <div class="roll-sub" id="roll-sub"></div>
+    <div class="roll-window" id="roll-window"></div>
+    <div class="roll-list" id="roll-list"></div>
+    <div class="roll-result" id="roll-result"></div>
+    <div class="roll-tip">点击可跳过</div>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div id="modal-overlay">
+  <div class="modal-card">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+/*__ENGINE_START__*/
+'use strict';
+// ============ 基础定义(纯数据/纯函数,不依赖 DOM,可供 node 提取测试) ============
+var STAT_KEYS = ['talent','grades','contest','money','relation','fame','health'];
+var STAT_META = [
+  {key:'talent', icon:'🧬', name:'天赋',     color:'#805ad5', desc:'学习与成长的潜力,基本恒定'},
+  {key:'grades', icon:'📖', name:'成绩',     color:'#2f855a', desc:'决定高考结果的核心数值'},
+  {key:'contest',icon:'🏆', name:'竞赛',     color:'#d69e2e', desc:'竞赛能力值,决定省奖等级(走竞赛路线后启用)'},
+  {key:'money',  icon:'💰', name:'金钱',     color:'#dd6b20', desc:'家庭条件与可支配零花钱'},
+  {key:'relation',icon:'🤝', name:'关系',    color:'#d53f8c', desc:'同学、老师与家人的关系'},
+  {key:'fame',   icon:'⭐', name:'知名度',   color:'#3182ce', desc:'校园内外的名气'},
+  {key:'health', icon:'❤️', name:'健康心态', color:'#319795', desc:'身体与心理状态,过低会出问题'},
+];
+var SEM_NAMES = ['高一·上学期','高一下学期','高二·上学期','高二下学期','高三·上学期','高三下学期'];
+var SEM_EXAMS = ['期末考试','期末考试','期末考试','期末考试 · 会考','一模','高考'];
+var DIFF = {
+  hard:   {name:'硬核', icon:'💀', desc:'每学期 3 个事件\n成绩波动大\n不显示选项后果', events:3, mult:1,    rand:35, showFx:false},
+  normal: {name:'普通', icon:'🎯', desc:'每学期 2 个事件\n均衡体验(推荐)',      events:2, mult:1,    rand:25, showFx:true},
+  fast:   {name:'快进', icon:'⏩', desc:'每学期 1 个事件\n数值波动更猛\n几分钟通关', events:1, mult:1.25, rand:20, showFx:true},
+};
+var FLAG_META = {
+  wen:'文科 📚', li:'理科 🔬', love:'恋爱中 💕', contest_enabled:'竞赛路线 🏆',
+  contest_shengdui:'竞赛省队 🏅', contest_shengyi:'竞赛省一 🥇', contest_shenger:'竞赛省二 🥈',
+  contest_shengsan:'竞赛省三 🥉', contest_wu:'竞赛陪跑 😢',
+  abroad:'留学路线 ✈️', biz:'小生意人 💼', biz_small:'小打小闹 🛒', internet:'博主运营 📱',
+  brave:'正义伙伴 🦸', stage:'舞台经验 🎤', singer:'校园歌手 🎙️', coder:'编程入门 💻',
+  camp:'名校夏令营 ⛺', career_plan:'生涯规划 📋', love_confess:'毕业告白 💌',
+};
+
+function mulberry32(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+var ORIGINS = [
+  {id:'teacher', icon:'📚', name:'教师子弟', tag:'书香门第', talent:[70,80], grades:45, money:30, relation:45, fame:10, health:65, pocket:4, stress:4,
+   desc:'父母都是老师,从小被盯着学习,基础扎实,但管得也严。'},
+  {id:'rich', icon:'💎', name:'富二代', tag:'家境殷实', talent:[50,65], grades:30, money:85, relation:35, fame:35, health:60, pocket:10, stress:4,
+   desc:'家里有矿,零花钱管够,人脉广,但容易被人带着玩物丧志。'},
+  {id:'poor', icon:'🌾', name:'寒门学子', tag:'励志逆袭', talent:[55,80], grades:38, money:12, relation:40, fame:5, health:55, pocket:1, stress:5,
+   desc:'家里条件不好,但你清楚:读书是唯一的出路。'},
+  {id:'jingsai', icon:'🧮', name:'竞赛生', tag:'竞赛苗子', talent:[70,85], grades:46, money:35, relation:40, fame:20, health:60, pocket:4, stress:4,
+   desc:'初中就拿过不少奖,一进高中就瞄准竞赛路线,自带竞赛能力值。'},
+  {id:'normal', icon:'🏠', name:'普通家庭', tag:'一切皆有可能', talent:[55,75], grades:33, money:40, relation:42, fame:12, health:70, pocket:4, stress:4,
+   desc:'普普通通的家庭,普普通通的你,未来全靠自己闯。'},
+];
+
+var SCHOOL_CITY = ['临江','青阳','云川','南岭','望海','陇西','江北','东湖','石城','平洲','宜州','安澜'];
+var SCHOOL_TYPE = ['第一中学','实验中学','外国语学校','第二中学','高级中学','育才中学','七中'];
+function genSchoolName(rng){
+  var c = SCHOOL_CITY[Math.floor(rng()*SCHOOL_CITY.length)];
+  var t = SCHOOL_TYPE[Math.floor(rng()*SCHOOL_TYPE.length)];
+  return c + '市' + t;
+}
+// ============ 事件数据 ============
+// sem: 可用学期(1-6); cond: 事件门槛 {stat:{...}, statMax:{...}, flag:'...'}; opts: 选项
+// fx: 数值效果; flag: 获得状态; need: 选项门槛 {数值名:最小值} 或 {flag:'...'}
+var EVENTS = [
+// ---------- 高一上学期 ----------
+{id:'ev_junxun', sem:[1], icon:'☀️', title:'军训日', desc:'烈日当空,军训教官让大家站军姿。你汗流浃背,双腿开始发软……',
+ opts:[
+  {text:'咬牙坚持到最后', fx:{health:-5,relation:3}},
+  {text:'假装中暑晕倒去树荫休息', fx:{health:5,fame:4,relation:-3}},
+  {text:'休息时帮同学打水', fx:{relation:5,health:-2}},
+ ]},
+{id:'ev_mokao', sem:[1], icon:'📝', title:'开学摸底考', desc:'入学第一周就是摸底考试,你翻开试卷,发现好多题见都没见过。',
+ opts:[
+  {text:'考前熬夜认真复习', fx:{grades:3,health:-2}},
+  {text:'放平心态,随便考考', fx:{health:3,grades:-2}},
+  {text:'找学长学姐借复习笔记', fx:{grades:3,relation:2}},
+ ]},
+{id:'ev_tongzhuo', sem:[1], icon:'🗣️', title:'话痨同桌', desc:'新同桌是个话痨,上课总拉着你聊天,但你俩意外地投缘。',
+ opts:[
+  {text:'上课一起聊,下课一起玩', fx:{relation:5,grades:-3}},
+  {text:'约好下课再聊,上课互不打扰', fx:{relation:3,grades:2}},
+  {text:'找老师要求换座位', fx:{grades:3,relation:-4}},
+ ]},
+{id:'ev_shetuan', sem:[1], icon:'🎪', title:'社团招新', desc:'「百团大战」开始,各社团摆摊招新,学长学姐热情地拉你入社。',
+ opts:[
+  {text:'加入学生会,锻炼自己', fx:{fame:5,relation:4,health:-3}},
+  {text:'加入篮球社,挥洒汗水', fx:{health:6,relation:3,grades:-1}},
+  {text:'加入文学社,安静读书', fx:{grades:2,fame:3}},
+  {text:'都不参加,专注学习', fx:{grades:4,relation:-2}},
+ ]},
+{id:'ev_shuang', sem:[1], icon:'😞', title:'第一次月考失利', desc:'第一次月考成绩出来,你排名靠后,心里很不是滋味。',
+ opts:[
+  {text:'熬夜苦读,誓要赶上来', fx:{grades:5,health:-8}},
+  {text:'找老师分析试卷找问题', fx:{grades:4,relation:4}},
+  {text:'找同学吐槽发泄一番', fx:{relation:4,health:3,grades:-2}},
+  {text:'怀疑自己不是学习的料', fx:{health:-5,grades:-2}},
+ ]},
+{id:'ev_banwei', sem:[1], icon:'📋', title:'班干部竞选', desc:'班主任宣布竞选班干部,教室里议论纷纷。',
+ opts:[
+  {text:'上台竞选班长', fx:{fame:6,relation:4,grades:-2}},
+  {text:'竞选学习委员', fx:{grades:2,fame:3,relation:2}},
+  {text:'帮好朋友拉票助威', fx:{relation:5}},
+  {text:'不参加,安心当个平民', fx:{grades:2}},
+ ]},
+{id:'ev_yundonghui', sem:[1], icon:'🏃', title:'校运会', desc:'秋季校运会开幕,班主任号召大家踊跃报名。',
+ opts:[
+  {text:'报名长跑项目,挑战自己', fx:{health:8,fame:6,relation:3}},
+  {text:'报名当志愿者', fx:{relation:5,health:-2}},
+  {text:'写广播稿给班级加油', fx:{grades:2,fame:3}},
+  {text:'躲进教室刷题', fx:{grades:4,relation:-3}},
+ ]},
+{id:'ev_shouji', sem:[1], icon:'📱', title:'手机风波', desc:'深夜,你在被窝里玩手机,被起夜的家长抓了个正着。',
+ opts:[
+  {text:'老实认错,交手机', fx:{relation:3,grades:-2}},
+  {text:'顶嘴:「别的同学都有手机!」', fx:{relation:-7,fame:2}},
+  {text:'保证期末考好来换手机', fx:{grades:4,relation:2,health:-3}},
+ ]},
+{id:'ev_qingshu', sem:[1], icon:'💌', title:'课桌里的情书', desc:'课桌里出现一封没有署名的信,打开一看——是一封情书。',
+ opts:[
+  {text:'找到 TA,答应交往', fx:{relation:5,health:6,grades:-5}, flag:['love']},
+  {text:'和 TA 约好一起上自习', fx:{grades:2,relation:4}, flag:['love']},
+  {text:'礼貌拒绝,专心学习', fx:{grades:3,relation:-2}},
+  {text:'装作没看见', fx:{grades:2,health:-2}},
+ ]},
+{id:'ev_wangba', sem:[1], icon:'🕹️', title:'网吧诱惑', desc:'几个同学约你周末去网吧开黑,你已经很久没碰游戏了。',
+ opts:[
+  {text:'一起去,痛快玩一天', fx:{relation:6,health:-6,grades:-6}},
+  {text:'拒绝,回家写作业', fx:{grades:4,relation:-3}},
+  {text:'反手拉他们去图书馆', fx:{grades:3,relation:5}},
+ ]},
+{id:'ev_jiazhanghui', sem:[1], icon:'👨‍👩‍👧', title:'家长会', desc:'期中考试后要开家长会,老师让每个同学务必通知家长到场。',
+ opts:[
+  {text:'主动坦白成绩,请家长理解', fx:{relation:5,grades:2}},
+  {text:'谎称家长出差来不了', fx:{relation:-4,health:-3}},
+  {text:'找表哥冒充家长', fx:{relation:-6,fame:3,health:-3}},
+ ]},
+{id:'ev_buxiban', sem:[1], icon:'🏫', title:'补习班之争', desc:'父母想给你报周末补习班,但你想学点别的。',
+ opts:[
+  {text:'听话,去上补习班', fx:{money:-15,grades:6,health:-3}, need:{money:15}},
+  {text:'拒绝,坚持学画画', fx:{relation:-4,fame:4,health:4}},
+  {text:'讨价还价,只报一门', fx:{money:-8,grades:3,relation:2}, need:{money:8}},
+ ]},
+{id:'ev_wandanhui', sem:[1], icon:'🎊', title:'元旦晚会', desc:'学校举办元旦晚会,各班都要出节目,文艺委员正在找人。',
+ opts:[
+  {text:'上台表演节目', fx:{fame:9,relation:4,grades:-2}, flag:['stage']},
+  {text:'报名幕后工作', fx:{relation:5,fame:2}},
+  {text:'当观众放松一下', fx:{health:4}},
+  {text:'逃掉排练去自习', fx:{grades:4,relation:-3}},
+ ]},
+{id:'ev_fuxijihua', sem:[1], icon:'📅', title:'期末复习计划', desc:'期末考试临近,你决心制定一份复习计划。',
+ opts:[
+  {text:'严格执行,雷打不动', fx:{grades:5,health:-3}},
+  {text:'计划赶不上变化,随缘', fx:{grades:2}},
+  {text:'考前突击,通宵抱佛脚', fx:{grades:4,health:-7}},
+  {text:'摆烂,考完再说', fx:{health:5,grades:-5}},
+ ]},
+{id:'ev_hanjia', sem:[1], icon:'🧨', title:'寒假怎么过', desc:'期末考试结束,寒假来临,你打算怎么安排?',
+ opts:[
+  {text:'报寒假补习班', fx:{money:-12,grades:5,health:-2}, need:{money:12}},
+  {text:'找份寒假工体验生活', fx:{money:15,health:-4,relation:-2}},
+  {text:'和家人出去旅行', fx:{money:-20,health:8,relation:4}, need:{money:20}},
+  {text:'宅家打游戏', fx:{health:5,grades:-4}},
+ ]},
+// ---------- 高一下学期 ----------
+{id:'ev_xuanke', sem:[2], icon:'⚖️', title:'文理分科', desc:'高一结束前,你面临文理分科的抉择。选科将影响未来的方向。', forceSem:2,
+ opts:[
+  {text:'选文科:我喜欢文史哲', fx:{grades:2,fame:2}, flag:['wen']},
+  {text:'选理科:我要当工程师', fx:{grades:3,talent:1}, flag:['li']},
+  {text:'纠结后随大流选理科', fx:{grades:1,relation:2}, flag:['li']},
+ ]},
+{id:'ev_xintongzhuo', sem:[2], icon:'🪑', title:'新班级的新同桌', desc:'分科后的新班级,你的新同桌看起来不太好接近。',
+ opts:[
+  {text:'主动搭话,帮 TA 融入', fx:{relation:5,health:-2}},
+  {text:'和 TA 约法三章,互不干扰', fx:{grades:2,relation:2}},
+  {text:'暗中观察一段时间', fx:{grades:2,health:-2}},
+ ]},
+{id:'ev_geshoudasai', sem:[2], icon:'🎤', title:'校园歌手大赛', desc:'校园歌手大赛开始报名,同学们起哄让你去试试。',
+ opts:[
+  {text:'报名,选歌练到半夜', fx:{fame:10,health:-4,grades:-3}, flag:['singer','stage']},
+  {text:'给参赛同学做帮唱', fx:{relation:6,fame:3}},
+  {text:'当观众,安静欣赏', fx:{health:3}},
+ ]},
+{id:'ev_baling', sem:[2], icon:'🛡️', title:'被孤立的同学', desc:'班上有个同学被小团体孤立,你看到 TA 总是一个人吃午饭。',
+ opts:[
+  {text:'坐过去和 TA 一起吃饭', fx:{relation:8,fame:4,health:-2}, flag:['brave']},
+  {text:'悄悄告诉班主任', fx:{relation:4}},
+  {text:'多一事不如少一事', fx:{health:-5,relation:-3}},
+ ]},
+{id:'ev_chunyou', sem:[2], icon:'🌸', title:'春游', desc:'学校组织春游,大巴车上开始抢座位。',
+ opts:[
+  {text:'和朋友坐一起', fx:{health:4,relation:4}},
+  {text:'和 crush 坐一起', fx:{health:8}},
+  {text:'和班主任坐一起', fx:{health:-35}},
+ ]},
+{id:'ev_linghuajia', sem:[2], icon:'🧾', title:'零花钱谈判', desc:'零花钱越来越不够花,你决定和父母正式谈判。',
+ opts:[
+  {text:'列消费清单,讲道理', fx:{money:10,relation:2}},
+  {text:'用期末成绩作担保', fx:{grades:3,money:8}},
+  {text:'哭穷卖惨博同情', fx:{money:5,relation:-2}},
+  {text:'算了,省着点花', fx:{relation:2}},
+ ]},
+{id:'ev_xiaokan', sem:[2], icon:'📰', title:'校刊征稿', desc:'校刊征稿,本期主题是「我的高中生活」。',
+ opts:[
+  {text:'认真写一篇散文投稿', fx:{fame:5,grades:2}},
+  {text:'投一篇搞笑段子', fx:{fame:6,relation:2}},
+  {text:'不感兴趣', fx:{grades:1}},
+ ]},
+{id:'ev_pingyou', sem:[2], icon:'🏆', title:'三好学生评选', desc:'学期末评优,班里要投票选三好学生。',
+ opts:[
+  {text:'积极拉票', fx:{fame:4,relation:2,health:-2}},
+  {text:'顺其自然', fx:{relation:2}},
+  {text:'把票投给好朋友', fx:{relation:5}},
+ ]},
+{id:'ev_shengri', sem:[2], icon:'🎂', title:'好朋友的生日', desc:'好朋友要过生日了,大家商量着凑钱给 TA 办个惊喜。', cond:{stat:{money:20}},
+ opts:[
+  {text:'出大头买蛋糕', fx:{money:-25,relation:7}, need:{money:25}},
+  {text:'和大家平摊', fx:{money:-8,relation:5}, need:{money:8}},
+  {text:'亲手写一张贺卡', fx:{relation:4}},
+ ]},
+// ---------- 高二上学期 ----------
+{id:'ev_paiming', sem:[3], icon:'📉', title:'排名下滑被约谈', desc:'高二第一次月考,你排名大幅下滑,班主任把你叫到了办公室。',
+ opts:[
+  {text:'立下军令状,下次必进前百', fx:{grades:5,health:-6}},
+  {text:'冷静调整学习方法', fx:{grades:4,health:2}},
+  {text:'心里不服但沉默不语', fx:{health:-3,grades:-2}},
+  {text:'破罐破摔,爱咋咋地', fx:{health:3,grades:-6}},
+ ]},
+{id:'ev_lianai_faxian', sem:[3], icon:'🚨', title:'早恋被老师发现', desc:'班主任从别的同学口中听说了你谈恋爱的事,找你和 TA 谈话。', cond:{flag:'love'},
+ opts:[
+  {text:'当面保证不影响学习', fx:{grades:4,relation:-4,health:-2}},
+  {text:'转为地下恋,小心谨慎', fx:{health:-3,grades:-3,relation:-4}},
+  {text:'忍痛分手,专注学业', fx:{grades:4,relation:2,health:-5}, unflag:['love']},
+  {text:'和老师硬刚到底', fx:{relation:-8,fame:4}},
+ ]},
+{id:'ev_lanqiusai', sem:[3], icon:'🏀', title:'年级篮球赛', desc:'年级篮球赛开打,你们班还缺一名主力。',
+ opts:[
+  {text:'上场参赛,拼尽全力', fx:{health:7,relation:6,fame:5,grades:-2}},
+  {text:'当替补兼后勤', fx:{relation:5,health:2}},
+  {text:'组织啦啦队加油', fx:{fame:4,relation:4}},
+  {text:'不去,自习室刷题', fx:{grades:4,relation:-3}},
+ ]},
+{id:'ev_buchang', sem:[3], icon:'🧑‍🏫', title:'老师的免费补课', desc:'老师看你最近跟不上,主动提出课后免费帮你补课。', cond:{statMax:{grades:60}},
+ opts:[
+  {text:'感激地接受', fx:{grades:5,relation:4,health:-2}},
+  {text:'碍于面子拒绝', fx:{grades:-2,relation:-2}},
+  {text:'拉上几个同学一起', fx:{grades:4,relation:5}},
+ ]},
+{id:'ev_xueshenghui', sem:[3], icon:'🎖️', title:'学生会部长推举', desc:'学生会换届,部长推荐你竞选宣传部部长。', cond:{stat:{fame:30}},
+ opts:[
+  {text:'接受,认真干出成绩', fx:{fame:8,relation:5,grades:-3}},
+  {text:'婉拒,学业为重', fx:{grades:3}},
+ ]},
+{id:'ev_biji', sem:[3], icon:'💘', title:'暗恋对象借笔记', desc:'你暗恋的 TA 突然找你借数学笔记。',
+ opts:[
+  {text:'熬夜整理一份完美笔记', fx:{grades:3,relation:4,health:-3}},
+  {text:'直接把笔记本递过去', fx:{relation:2}},
+  {text:'紧张到语无伦次', fx:{relation:-2,health:-2}},
+ ]},
+{id:'ev_jingji', sem:[3], icon:'💸', title:'家里的变故', desc:'家里生意出了状况,父母开始精打细算,饭桌上的气氛有些凝重。',
+ opts:[
+  {text:'主动提出少花零花钱', fx:{relation:6,money:-5}},
+  {text:'周末找兼职补贴家用', fx:{money:15,health:-6,grades:-4}},
+  {text:'多陪伴父母,一起面对', fx:{relation:5,health:2}},
+  {text:'觉得和自己无关', fx:{relation:-6}},
+ ]},
+{id:'ev_qinqi', sem:[3], icon:'🧒', title:'亲戚家小孩借住', desc:'亲戚家上初中的小孩来你家借住,让你帮忙辅导功课。',
+ opts:[
+  {text:'耐心辅导 TA', fx:{grades:3,relation:4,health:-2}},
+  {text:'教 TA 打游戏', fx:{relation:4,health:3,grades:-2}},
+  {text:'躲去图书馆自习', fx:{grades:3,relation:-3}},
+ ]},
+{id:'ev_tice', sem:[3], icon:'📏', title:'一年一度的体测', desc:'体测来了,长跑是很多人的噩梦。',
+ opts:[
+  {text:'提前一周锻炼身体', fx:{health:6,grades:-1}},
+  {text:'认真完成每一项', fx:{health:4,fame:2}},
+  {text:'帮同学代测赚人情', fx:{relation:6,health:-5,fame:-3}},
+ ]},
+{id:'ev_yishujie', sem:[3], icon:'🎨', title:'校园艺术节', desc:'校园艺术节开幕,美术展、微电影、摄影展……热闹非凡。',
+ opts:[
+  {text:'报名微电影比赛', fx:{fame:8,relation:3,health:-3}},
+  {text:'帮班级布置展位', fx:{relation:5,fame:2}},
+  {text:'逛逛展,放松心情', fx:{health:4}},
+ ]},
+{id:'ev_kejin', sem:[3], icon:'🎮', title:'游戏新皮肤', desc:'最近迷上一款游戏,新皮肤上线,你心痒难耐。', cond:{stat:{money:30}},
+ opts:[
+  {text:'648 直接拿下', fx:{money:-25,health:4,grades:-4}},
+  {text:'买个小月卡意思一下', fx:{money:-8,health:3}},
+  {text:'白嫖到底,坚决不充', fx:{health:2}},
+ ]},
+{id:'ev_chaofang', sem:[3], icon:'🏠', title:'和父母吵架', desc:'因为一点小事,你和父母大吵一架,双方都说了重话。',
+ opts:[
+  {text:'摔门回房冷战', fx:{relation:-8,health:-4}},
+  {text:'冷静后主动沟通', fx:{relation:6,health:2}},
+  {text:'写一封信表达想法', fx:{relation:7,grades:2}},
+ ]},
+{id:'ev_zhuanxuesheng', sem:[3], icon:'🧳', title:'转校生', desc:'班里来了个转校生,班主任让同桌的你带 TA 熟悉环境。',
+ opts:[
+  {text:'热情带 TA 逛遍校园', fx:{relation:6,fame:2}},
+  {text:'客气但保持距离', fx:{relation:1}},
+  {text:'打探 TA 的八卦', fx:{relation:2,fame:2,health:-2}},
+ ]},
+// ---------- 高二下学期 ----------
+{id:'ev_huikao', sem:[4], icon:'📜', title:'会考复习', desc:'学业水平考试(会考)快到了,虽然不难,但也不能大意。',
+ opts:[
+  {text:'认真过一遍课本', fx:{grades:4}},
+  {text:'刷完历年真题', fx:{grades:3,health:-2}},
+  {text:'相信基础,裸考上阵', fx:{health:3,grades:-2}},
+ ]},
+{id:'ev_wanxiuzixi', sem:[4], icon:'🌙', title:'漫长的晚自习', desc:'晚自习越来越长,你有点坐不住了。',
+ opts:[
+  {text:'偷偷看课外书', fx:{health:3,grades:-2}},
+  {text:'传纸条和同学聊天', fx:{relation:3,grades:-3}},
+  {text:'坚持刷完今天的题', fx:{grades:3,health:-2}},
+  {text:'刷竞赛题', fx:{contest:4,grades:-1}, need:{flag:'contest_enabled'}, roll:[
+    {p:0.3, fx:{health:-4}, say:'题目太难,心态有点崩'},
+    {p:0.7, fx:{}, say:'刷得顺风顺水'}]},
+ ]},
+{id:'ev_pingjing', sem:[4], icon:'🧗', title:'成绩瓶颈期', desc:'高二下学期,你感觉怎么努力成绩都不见涨,有点泄气。',
+ opts:[
+  {text:'找老师分析瓶颈', fx:{grades:4,relation:3}},
+  {text:'换个学习策略试试', fx:{grades:3,health:-2}},
+  {text:'自我怀疑,松懈下来', fx:{grades:-4,health:-4}},
+  {text:'和同学组学习小组', fx:{grades:4,relation:4}},
+ ]},
+{id:'ev_moshou', sem:[4], icon:'🔒', title:'手机被没收', desc:'上课玩手机被老师没收,老师让你请家长来领。',
+ opts:[
+  {text:'主动认错写检讨', fx:{relation:4,grades:1}},
+  {text:'让同学帮忙顶包', fx:{relation:5,grades:-2,health:-3}},
+  {text:'找借口死缠烂打要回', fx:{relation:-3,grades:-2}},
+ ]},
+{id:'ev_jineng', sem:[4], icon:'🛠️', title:'学一门技能', desc:'你意识到除了高考,自己还应该有一技之长。',
+ opts:[
+  {text:'学剪辑做视频', fx:{fame:5,grades:-2}},
+  {text:'学吉他', fx:{fame:4,health:3,money:-10}, need:{money:10}},
+  {text:'学编程', fx:{grades:3,talent:1}, flag:['coder']},
+  {text:'算了,高考要紧', fx:{grades:3}},
+ ]},
+{id:'ev_yecan', sem:[4], icon:'🍲', title:'班级聚餐', desc:'期末班级聚餐,AA 制人均 50。', cond:{stat:{money:30}},
+ opts:[
+  {text:'痛快参加,吃好喝好', fx:{relation:5,health:3,money:-15}, need:{money:15}},
+  {text:'借口有事不去', fx:{relation:-2}},
+  {text:'主动组织安排', fx:{relation:6,fame:3,money:-15}, need:{money:15}},
+ ]},
+{id:'ev_shujia', sem:[4], icon:'🏖️', title:'高二暑假', desc:'高二暑假,这是高考前最后一个长假。',
+ opts:[
+  {text:'报高考集训营', fx:{money:-20,grades:6,health:-3}, need:{money:20}},
+  {text:'制定计划在家自学', fx:{grades:4,health:2}},
+  {text:'参加名校夏令营', fx:{money:-25,grades:5,fame:3}, flag:['camp'], need:{money:25}},
+  {text:'彻底躺平休息', fx:{health:7,grades:-3}},
+ ]},
+// ---------- 高三上学期 ----------
+{id:'ev_yilun', sem:[5], icon:'📚', title:'一轮复习启动', desc:'高三开学,一轮复习启动,课桌上堆起了山一样的书。',
+ opts:[
+  {text:'制定详细的复习计划', fx:{grades:4}},
+  {text:'囤一堆教辅资料', fx:{money:-12,grades:3,health:-2}, need:{money:12}},
+  {text:'焦虑到失眠', fx:{health:-7,grades:-2}},
+ ]},
+{id:'ev_bukechao', sem:[5], icon:'💺', title:'补课潮', desc:'班上一半人都在外面上补习班,父母也坐不住了。', cond:{stat:{money:25}},
+ opts:[
+  {text:'报名师一对一', fx:{money:-30,grades:7,health:-4}, need:{money:30}},
+  {text:'报大班课', fx:{money:-15,grades:4,health:-2}, need:{money:15}},
+  {text:'买网课在家自学', fx:{money:-10,grades:4}, need:{money:10}},
+  {text:'婉拒,坚持自学', fx:{grades:3,health:2}},
+ ]},
+{id:'ev_zhiyuan', sem:[5], icon:'🧭', title:'志愿填报讲座', desc:'学校请来招办老师开志愿填报讲座,同学们听得很认真。',
+ opts:[
+  {text:'认真听讲做笔记', fx:{grades:2}, flag:['career_plan']},
+  {text:'听着听着睡着了', fx:{health:3}},
+  {text:'逃课去打篮球', fx:{health:4,grades:-2,relation:-2}},
+ ]},
+{id:'ev_peidu', sem:[5], icon:'🍱', title:'家长陪读', desc:'父母提出在学校附近租房陪读,专门照顾你的饮食起居。',
+ opts:[
+  {text:'接受陪读', fx:{health:5,relation:5,grades:2,money:-10}, need:{money:10}},
+  {text:'拒绝,想独立', fx:{relation:-4,health:-2}},
+  {text:'折中:只周末来看你', fx:{relation:4,grades:2}},
+ ]},
+{id:'ev_yali', sem:[5], icon:'😮‍💨', title:'压力爆表', desc:'接连的考试和排名让你压力爆表,情绪低落到了谷底。', cond:{statMax:{health:45}},
+ opts:[
+  {text:'去操场跑十圈', fx:{health:9,grades:1}},
+  {text:'找心理老师聊聊', fx:{health:8,relation:4}},
+  {text:'拉好友疯狂吐槽', fx:{relation:5,health:5}},
+  {text:'硬扛着继续刷题', fx:{grades:3,health:-6}},
+ ]},
+{id:'ev_douyin', sem:[5], icon:'📱', title:'短视频上瘾', desc:'你迷上了刷短视频,经常一刷就是两个小时。',
+ opts:[
+  {text:'关注学习博主,边刷边学', fx:{grades:2,health:1}},
+  {text:'彻底卸载,告别诱惑', fx:{grades:4,health:-2}},
+  {text:'放纵自己刷个爽', fx:{health:4,grades:-6,fame:2}},
+ ]},
+{id:'ev_lianai_gaosan', sem:[5], icon:'💞', title:'恋爱与学业', desc:'高三了,恋爱成了奢侈品,你和 TA 都很焦虑。', cond:{flag:'love'},
+ opts:[
+  {text:'约定一起考同一所大学', fx:{grades:4,relation:4,health:-2}},
+  {text:'周末约会放松', fx:{health:5,relation:3,grades:-3}},
+  {text:'暂时分开,各自冷静', fx:{grades:5,relation:-3,health:-4}, unflag:['love']},
+ ]},
+{id:'ev_shangji', sem:[5], icon:'💼', title:'发现商机', desc:'你在学校里发现了一个赚钱门路:代购零食、倒卖球鞋。', cond:{stat:{money:50}},
+ opts:[
+  {text:'认真经营,越做越大', fx:{money:20,grades:-6,fame:4}, flag:['biz']},
+  {text:'小打小闹赚点零花', fx:{money:8,grades:-3,fame:2}, flag:['biz_small']},
+  {text:'不搞,专注高考', fx:{grades:3}},
+ ]},
+{id:'ev_paishe', sem:[5], icon:'🎬', title:'vlog 意外走红', desc:'你随手拍的校园 vlog 意外火了,评论区都在催更。', cond:{stat:{fame:40}},
+ opts:[
+  {text:'认真运营账号', fx:{fame:12,grades:-6}, flag:['internet']},
+  {text:'停更,回归学习', fx:{grades:4}},
+  {text:'蹭热点继续涨粉', fx:{fame:8,relation:-3,grades:-3}, flag:['internet']},
+ ]},
+{id:'ev_tongzhuo_meng', sem:[5], icon:'🌟', title:'同桌的梦想', desc:'同桌说 TA 想考北外,但英语成绩还差得远。',
+ opts:[
+  {text:'陪 TA 早起背单词', fx:{relation:6,grades:2,health:-2}},
+  {text:'帮 TA 整理笔记', fx:{relation:5,grades:2}},
+  {text:'鼓励 TA,专注自己', fx:{grades:3,relation:2}},
+ ]},
+// ---------- 高三下学期 ----------
+{id:'ev_baishi', sem:[6], icon:'🔥', title:'百日誓师', desc:'距离高考还有 100 天,学校召开百日誓师大会。',
+ opts:[
+  {text:'热血沸腾,立下目标', fx:{grades:3,health:-2}},
+  {text:'冷静制定百日计划', fx:{grades:4,health:1}},
+  {text:'无感,只想快点结束', fx:{health:-3}},
+ ]},
+{id:'ev_aoye', sem:[6], icon:'🕯️', title:'熬夜冲刺', desc:'复习进入白热化,你纠结要不要熬夜。',
+ opts:[
+  {text:'每天学到凌晨两点', fx:{grades:6,health:-10}},
+  {text:'劳逸结合,保证睡眠', fx:{grades:4,health:3}},
+  {text:'早睡早起效率高', fx:{grades:3,health:5}},
+ ]},
+{id:'ev_jiaolv', sem:[6], icon:'💓', title:'考前焦虑', desc:'离高考越来越近,你开始失眠、心慌。',
+ opts:[
+  {text:'每天跑步释放压力', fx:{health:8,grades:2}},
+  {text:'刷题麻痹自己', fx:{grades:4,health:-6}},
+  {text:'和父母长谈一次', fx:{health:6,relation:5}},
+  {text:'干脆摆烂几天', fx:{health:5,grades:-6}},
+ ]},
+{id:'ev_zhiyuan_tianbao', sem:[6], icon:'🗺️', title:'志愿填报困惑', desc:'志愿填报讲座后,你对未来更加迷茫了。',
+ opts:[
+  {text:'找班主任聊聊', fx:{grades:2,relation:4}},
+  {text:'自己查遍资料', fx:{grades:2,health:-2}},
+  {text:'听父母的安排', fx:{relation:4}},
+ ]},
+{id:'ev_kaoqianye', sem:[6], icon:'🌃', title:'高考前夜', desc:'明天就要高考了,今晚……',
+ opts:[
+  {text:'再过一遍错题本', fx:{grades:3,health:-3}},
+  {text:'早早休息养精蓄锐', fx:{health:6}},
+  {text:'紧张得刷手机到半夜', fx:{health:-5,grades:-3}},
+ ]},
+{id:'ev_chuguo', sem:[5,6], icon:'✈️', title:'留学的选项', desc:'家里问你有没有考虑过出国留学。', cond:{stat:{money:60}},
+ opts:[
+  {text:'全力准备留学申请', fx:{money:-30,grades:-5,health:-4}, flag:['abroad'], need:{money:30}},
+  {text:'留学高考两手抓', fx:{money:-20,health:-7}, flag:['abroad'], need:{money:20}},
+  {text:'婉拒,留在国内高考', fx:{grades:2,relation:3}},
+ ]},
+{id:'ev_biyeshao', sem:[6], icon:'📸', title:'毕业照', desc:'毕业照拍摄日,全班都穿上了统一的班服。',
+ opts:[
+  {text:'和所有人合影留念', fx:{relation:5,health:3}},
+  {text:'搞怪抢镜,留下传说', fx:{fame:5,relation:3}},
+  {text:'鼓起勇气和暗恋的人单独合影', fx:{relation:5,health:3}, flag:['love_confess']},
+  {text:'状态不好,随便拍拍', fx:{health:-2}},
+ ]},
+{id:'ev_sanhuofan', sem:[6], icon:'🍻', title:'散伙饭', desc:'高考结束后,班级组织散伙饭。',
+ opts:[
+  {text:'主动组织安排', fx:{relation:6,fame:4,money:-12}, need:{money:12}},
+  {text:'参加,和每个人干杯', fx:{relation:5,health:3}},
+  {text:'和好友单独小聚', fx:{relation:4}},
+  {text:'没去,在家补觉', fx:{health:4,relation:-3}},
+ ]},
+{id:'ev_xuanxue', sem:[6], icon:'🍀', title:'考试玄学', desc:'班里流行各种考试玄学:转发锦鲤、穿紫色衣服……',
+ opts:[
+  {text:'宁可信其有,全部安排', fx:{health:3,fame:2}},
+  {text:'微微一笑,继续刷题', fx:{grades:2}},
+  {text:'给全班同学送祝福', fx:{relation:5}},
+ ]},
+// ---------- 竞赛与新增事件 ----------
+{id:'ev_jingsai_qidong', sem:[1,2,3,4], icon:'🧮', title:'竞赛教练的邀请', desc:'竞赛教练找到你:「以你的天赋和成绩,不搞竞赛可惜了。要不要试试?」', forceEvery:true, forceCond:{stat:{talent:65,grades:52}, notFlag:'contest_enabled'},
+ opts:[
+  {text:'接受挑战,开启竞赛之路', fx:{fame:4,grades:-3}, initContest:true, flag:['contest_enabled']},
+  {text:'婉拒,专心备战高考', fx:{grades:2}},
+ ]},
+{id:'ev_waike', sem:[1,2,3,4,5], icon:'🏫', title:'竞赛外培课', desc:'竞赛外培课开始报名,价格不低,不少同学都去了。', cond:{flag:'contest_enabled'}, forceEvery:true, forceCond:{flag:'contest_enabled'}, repeat:true,
+ opts:[
+  {text:'报名参加', fx:{money:-10,grades:1}, need:{money:10}, roll:[
+    {p:0.6, fx:{contest:8}, say:'学到了不少东西'},
+    {p:0.4, fx:{health:3,relation:3}, say:'和同学一起划水,混得很开心'}]},
+  {text:'不去了,自己练', fx:{relation:-3}},
+ ]},
+{id:'ev_qiaokeli', sem:[4,5], icon:'🍫', title:'班主任的巧克力', desc:'竞赛考试前,班主任在教室里给你发了块巧克力:「考前吃巧克力,稳的。」同学们都看着。', cond:{flag:'contest_enabled'},
+ opts:[
+  {text:'吃下巧克力', fx:{}},
+  {text:'当着全班同学的面扔掉', fx:{health:4,relation:4}},
+ ]},
+{id:'ev_xiaoke', sem:[3,4,5], icon:'💺', title:'班主任推荐的小课', desc:'班主任私下推荐了一个名师小课,说对你帮助很大,就是要花钱。', cond:{stat:{money:20}},
+ opts:[
+  {text:'掏钱报名', fx:{money:-15}, need:{money:15}, roll:[
+    {p:0.1, fx:{grades:6}, say:'名师果然名不虚传'},
+    {p:0.5, fx:{}, say:'钱花了,好像也没学到啥'},
+    {p:0.4, fx:{grades:-4,health:-4}, say:'方法不适合,反而练岔了'}]},
+  {text:'婉言谢绝', roll:[
+    {p:0.5, fx:{}, say:'无事发生'},
+    {p:0.5, fx:{relation:-4}, say:'班主任觉得你不给面子'}]},
+ ]},
+{id:'ev_daoxiao', sem:[2,3,4,5], icon:'⏰', title:'提前的到校时间', desc:'学校把到校时间又往前提了十分钟,你困死了。',
+ opts:[
+  {text:'咬牙早起,多背十分钟', fx:{grades:3,health:-5}},
+  {text:'踩着铃声冲进教室', fx:{health:-2,relation:-2}},
+  {text:'调整作息,早睡早起', fx:{health:4,grades:1}},
+ ]},
+{id:'ev_zufang', sem:[3,4], icon:'🏠', title:'租房还是住校', desc:'高三临近,不少同学在校外租房,家长问你要不要也搬出去。', cond:{stat:{money:20}},
+ opts:[
+  {text:'搬出去租房住', fx:{money:-20,health:8,grades:4}, need:{money:20}},
+  {text:'继续住校', roll:[
+    {p:0.5, fx:{grades:4}, say:'环境安静,专心学习'},
+    {p:0.2, fx:{health:-8,relation:-5}, say:'和室友闹了矛盾'},
+    {p:0.3, fx:{}, say:'一切照旧'}]},
+ ]},
+{id:'ev_biaobai', sem:[2,3,4], icon:'💐', title:'有人向你表白', desc:'有个异性和你当众表白,说实话,你觉得 TA 还不错。',
+ opts:[
+  {text:'答应交往', roll:[
+    {p:0.1, fx:{relation:6,health:5}, flag:['love'], say:'金童玉女,全校羡慕'},
+    {p:0.9, fx:{health:-4,relation:-2}, say:'谈了一个月就分了'}]},
+  {text:'委婉拒绝', roll:[
+    {p:0.5, fx:{}, say:'无事发生'},
+    {p:0.5, fx:{fame:3,relation:-5,health:-2}, say:'TA 恼羞成怒,传你的闲话'}]},
+ ]},
+{id:'ev_yumaoqiu', sem:[1,2,3,4], icon:'🏸', title:'羽毛球热潮', desc:'班里突然风靡打羽毛球,你看了看去年买的球拍,决定……',
+ opts:[
+  {text:'和他们一起打', roll:[
+    {p:0.9, fx:{health:6,relation:4}, say:'龙颜大悦'},
+    {p:0.1, fx:{health:-10}, say:'崴了脚,伤得不轻'}]},
+  {text:'算了吧', fx:{relation:4,health:3}},
+ ]},
+{id:'ev_taowanxi', sem:[2,3,4,5], icon:'🏃', title:'相约逃晚自习', desc:'几个同学约你一起逃晚自习,校门口新开了家烧烤摊。',
+ opts:[
+  {text:'不逃,老实待着', fx:{health:-3,grades:3}},
+  {text:'逃!', roll:[
+    {p:0.4, fx:{health:-8,grades:-5,relation:-2}, say:'被班主任抓了个正着'},
+    {p:0.6, fx:{health:6,grades:2,relation:4}, say:'顺利脱身,玩得很开心'}]},
+ ]},
+{id:'ev_shijiebei', sem:[2,4], icon:'⚽', title:'世界杯来了', desc:'世界杯开赛,今晚有一场关键比赛,同学们都很激动。',
+ opts:[
+  {text:'熬夜看球', fx:{grades:-3}, roll:[
+    {p:0.5, fx:{health:5}, say:'主队赢了,爽!'},
+    {p:0.5, fx:{health:-5}, say:'主队输了,熬夜还输球'}]},
+  {text:'不看,早点睡', fx:{health:-3}},
+  {text:'这玩意和我根本没关系吧!', fx:{relation:-5}},
+ ]},
+{id:'ev_xiaomao', sem:[1,2,3,4,5,6], icon:'🐱', title:'遇见校猫', desc:'校猫蹲在路边,眼巴巴地看着你。',
+ opts:[
+  {text:'蹲下喂它', fx:{health:6}},
+  {text:'无视它,径直走过', fx:{health:-25}},
+ ]},
+{id:'ev_yama', sem:[1,2,3], icon:'🌆', title:'压马路', desc:'放学路上,你迎面撞见班上的一对小情侣手牵手压马路。',
+ opts:[
+  {text:'假装没看见,默默走开', fx:{health:4,grades:-1}},
+  {text:'上去打招呼起哄', fx:{relation:3,health:2,grades:-2}},
+ ]},
+// ---------- 通用 ----------
+{id:'ev_shengbing', sem:[1,2,3,4,5,6], icon:'🤒', title:'换季生病', desc:'换季时节,你病倒了,发烧 38 度。',
+ opts:[
+  {text:'请假在家好好休息', fx:{health:8,grades:-2}},
+  {text:'硬撑着去上课', fx:{grades:2,health:-6}},
+  {text:'让同桌帮忙记笔记', fx:{relation:3,health:3}},
+ ]},
+{id:'ev_tushuguan', sem:[2,3,4], icon:'📖', title:'图书馆偶遇', desc:'周末在图书馆,你偶遇了班上的学习委员。',
+ opts:[
+  {text:'一起自习,互相监督', fx:{grades:3,relation:3}},
+  {text:'趁机请教问题', fx:{grades:3,relation:2}},
+  {text:'假装没看见', fx:{grades:2}},
+ ]},
+{id:'ev_zuoye', sem:[1,2,3], icon:'📑', title:'作业风暴', desc:'各科作业叠加,今晚的作业量多到离谱。',
+ opts:[
+  {text:'认真完成每一科', fx:{grades:3,health:-4}},
+  {text:'抄同学的应付一下', fx:{grades:-3,relation:2}},
+  {text:'只做薄弱科目', fx:{grades:2,health:-1}},
+ ]},
+];
+// ============ 结局数据(按优先级排序,取第一个满足者) ============
+// award(竞赛省奖)会降低对应高校的高考门槛:省队降清北/C9,省一降 C9,省二降 985
+var ENDINGS = [
+ {id:'zhuangyuan', icon:'👑', name:'全省状元',   hint:'高考 720 分以上',
+  cond:function(g){return g.score>=720;},
+  desc:'高考全省前十,状元之姿!媒体采访、名校争抢、全村鞭炮齐鸣。'},
+ {id:'shaonianban',icon:'🧠', name:'少年班天才', hint:'天赋 83+ 且成绩 88+',
+  cond:function(g){return g.s.talent>=83 && g.s.grades>=88;},
+  desc:'凭借超常天赋被中科大少年班相中,成为大家口中「别人家的孩子」。'},
+ {id:'abroad', icon:'✈️', name:'出国留学',  hint:'走留学路线,高考 400 分以上',
+  cond:function(g){return g.f.abroad && g.s.money>=40 && g.score>=400;},
+  desc:'拿到海外大学 offer,收拾行囊踏上留学之路,人生多了另一种可能。'},
+ {id:'startup', icon:'💼', name:'辍学创业',  hint:'经营过生意,高考低于 530 分',
+  cond:function(g){return g.f.biz && g.s.money>=60 && g.score<530;},
+  desc:'高中就开始折腾生意,毕业后全职创业,成了同学中最先「搞到钱」的人。'},
+ {id:'wanghong',icon:'📱', name:'百万网红',  hint:'运营账号,知名度 75 以上',
+  cond:function(g){return g.f.internet && g.s.fame>=75;},
+  desc:'账号粉丝突破百万,签约 MCN,高中毕业即年入数十万,全网都认识你。'},
+ {id:'jicheng', icon:'🏢', name:'继承家业',  hint:'金钱 80+,高考低于 470 分',
+  cond:function(g){return g.s.money>=80 && g.score<470;},
+  desc:'回到家族企业,从基层做起,过上衣食无忧的安稳生活。'},
+ {id:'tsinghua',icon:'🎓', name:'清北学霸',  hint:'高考 690+(竞赛省队可降至 580)',
+  cond:function(g){return g.score >= (g.award==='shengdui' ? 580 : 690);},
+  desc:'踏入清华北大,成为母校光荣榜上的一行。'},
+ {id:'c9', icon:'🏛️', name:'C9 联盟高校',  hint:'高考 650+(省队可降至 555,省一可降至 585)',
+  cond:function(g){var t=650; if(g.award==='shengdui') t=555; else if(g.award==='shengyi') t=585; return g.score>=t;},
+  desc:'考入 C9 联盟高校(复旦/上交/浙大/南大/中科大等),跻身顶尖名校行列。'},
+ {id:'c985', icon:'📚', name:'985 高校',  hint:'高考 620+(竞赛省二可降至 565)',
+  cond:function(g){return g.score >= (g.award==='shenger' ? 565 : 620);},
+  desc:'考入 985 高校,重点大学的光环下,未来可期。'},
+ {id:'c211', icon:'🏫', name:'211 高校',  hint:'高考 575–619 分',
+  cond:function(g){return g.score>=575;},
+  desc:'考入 211 高校,虽然离顶尖还差一步,但已是百里挑一。'},
+ {id:'yiben', icon:'📖', name:'一本',      hint:'高考 530–574 分',
+  cond:function(g){return g.score>=530;},
+  desc:'过了一本线,考入省内不错的大学,稳扎稳打,未来不慌。'},
+ {id:'ganbu', icon:'🤝', name:'学生领袖',  hint:'知名度 70+ 且关系 70+,高考 530+',
+  cond:function(g){return g.s.fame>=70 && g.s.relation>=70 && g.score>=530;},
+  desc:'一路班长部长当下来,大学继续干学生会,是当之无愧的校园风云人物。'},
+ {id:'love', icon:'💕', name:'修成正果',  hint:'毕业告白,关系 75 以上',
+  cond:function(g){return g.f.love_confess && g.s.relation>=75;},
+  desc:'毕业合影上的那张单独合照,成了故事的开始。你们考进了同一座城市。'},
+ {id:'erben', icon:'✏️', name:'二本',      hint:'高考 470–529 分',
+  cond:function(g){return g.score>=470;},
+  desc:'考入二本院校,平凡的大学生活里,也有属于自己的精彩。'},
+ {id:'zhuanke', icon:'🔧', name:'专科',      hint:'高考 300–469 分',
+  cond:function(g){return g.score>=300;},
+  desc:'进入专科院校,学一门手艺,踏踏实实谋生,日子一样过得有声有色。'},
+ {id:'fudu', icon:'📆', name:'复读再战',  hint:'高考低于 300 分,金钱 30+',
+  cond:function(g){return g.score<300 && g.s.money>=30;},
+  desc:'高考失利,你不甘心。收拾书本,走进了复读班,再战一年。'},
+ {id:'dagong', icon:'🏭', name:'打工谋生',  hint:'高考低于 300 分,金钱低于 30',
+  cond:function(g){return g.score<300 && g.s.money<30;},
+  desc:'高中毕业,你收拾行囊南下打工,开启了另一种人生。'},
+];
+
+// ============ 游戏引擎(纯函数,不依赖 DOM) ============
+function createGame(seed, diffId, originId){
+  var rng = mulberry32(seed >>> 0);
+  var o = null;
+  for(var i=0;i<ORIGINS.length;i++) if(ORIGINS[i].id===originId) o = ORIGINS[i];
+  var talent = Math.round(o.talent[0] + rng()*(o.talent[1]-o.talent[0]));
+  var stats = {talent:talent, grades:o.grades, money:o.money, relation:o.relation, fame:o.fame, health:o.health};
+  var flags = {};
+  if(originId === 'jingsai'){
+    stats.contest = clamp(Math.round(talent*0.55 - 10) + 8, 10, 55);
+    flags.contest_enabled = true;
+  }
+  return {
+    seed: seed>>>0, diff: diffId, origin: originId, originObj: o,
+    stats: stats, flags: flags, sem: 0, used: [], log: [], scores: [],
+    school: genSchoolName(rng), rng: rng,
+  };
+}
+
+function meetsCond(g, cond){
+  if(!cond) return true;
+  if(cond.stat) for(var k in cond.stat) if(g.stats[k] < cond.stat[k]) return false;
+  if(cond.statMax) for(var k2 in cond.statMax) if(g.stats[k2] > cond.statMax[k2]) return false;
+  if(cond.flag && !g.flags[cond.flag]) return false;
+  if(cond.notFlag && g.flags[cond.notFlag]) return false;
+  return true;
+}
+
+// 学期开始:数值自然演化
+function semesterStart(g){
+  var o = g.originObj;
+  g.sem++;
+  g.stats.grades  = clamp(g.stats.grades  + Math.round(g.stats.talent/50), 0, 100);
+  g.stats.health  = clamp(g.stats.health  - o.stress, 0, 100);
+  g.stats.money   = clamp(g.stats.money   + o.pocket, 0, 100);
+  if(g.stats.health < 30) g.stats.grades = clamp(g.stats.grades - 2, 0, 100); // 状态崩了影响学习
+}
+
+// 本学期的可用事件池(按 id 排序,保证种子确定性)
+// 注意:带 forceSem 的事件(选科/竞赛链/艺考/体测)不进入随机池,只走强制流程
+function availableEvents(g){
+  var pool = [];
+  for(var i=0;i<EVENTS.length;i++){
+    var e = EVENTS[i];
+    if(e.forceSem || e.forceEvery) continue;
+    if(e.sem.indexOf(g.sem)<0) continue;
+    if(!e.repeat && g.used.indexOf(e.id)>=0) continue;
+    if(!meetsCond(g, e.cond)) continue;
+    pool.push(e);
+  }
+  return pool;
+}
+
+// 抽本学期事件:先插强制事件(选科/每学期的竞赛外培课),再按权重随机抽取
+function drawEvents(g){
+  var forced = [];
+  for(var i=0;i<EVENTS.length;i++){
+    var e = EVENTS[i];
+    var isForced = (e.forceSem === g.sem) || (e.forceEvery && e.sem.indexOf(g.sem) >= 0);
+    if(isForced && (!e.forceOrigin || e.forceOrigin === g.origin) && meetsCond(g, e.forceCond)){
+      forced.push(e);
+    }
+  }
+  var rest = availableEvents(g);
+  var n = DIFF[g.diff].events - forced.length;
+  var picks = forced.slice();
+  for(var j=0;j<n && rest.length>0;j++){
+    var total = 0;
+    for(var a=0;a<rest.length;a++) total += (rest[a].w||1);
+    var r = g.rng()*total, idx = 0;
+    for(var b=0;b<rest.length;b++){ r -= (rest[b].w||1); if(r<=0){ idx=b; break; } }
+    picks.push(rest.splice(idx,1)[0]);
+  }
+  return picks;
+}
+
+// 事件里当前可选的选项
+function eligibleOpts(g, ev){
+  return ev.opts.filter(function(o){
+    if(!o.need) return true;
+    for(var k in o.need){
+      if(k==='flag'){ if(!g.flags[o.need.flag]) return false; }
+      else if(g.stats[k] < o.need[k]) return false;
+    }
+    return true;
+  });
+}
+
+// 应用选项效果,返回各数值变化量
+// 支持:概率分支 roll(种子随机,可复现)、启用竞赛能力 initContest、可重复事件 repeat
+function applyOption(g, ev, opt){
+  var mult = DIFF[g.diff].mult;
+  var deltas = {};
+  var say = '';
+  function applyFx(fx){
+    if(!fx) return;
+    for(var k in fx){
+      var nv = clamp(g.stats[k] + Math.round(fx[k]*mult), 0, 100);
+      deltas[k] = nv - g.stats[k];
+      g.stats[k] = nv;
+    }
+  }
+  applyFx(opt.fx);
+  // 走竞赛路线:启用竞赛能力值(初始值由天赋决定)
+  if(opt.initContest && g.stats.contest === undefined){
+    g.stats.contest = clamp(Math.round(g.stats.talent*0.55 - 10), 5, 45);
+    deltas.contest = g.stats.contest;
+  }
+  // 概率分支
+  var hitIdx = -1;
+  if(opt.roll){
+    var total = 0, i;
+    for(i=0;i<opt.roll.length;i++) total += opt.roll[i].p;
+    var rnd = g.rng()*total, hit = opt.roll[opt.roll.length-1];
+    hitIdx = opt.roll.length - 1;
+    for(i=0;i<opt.roll.length;i++){ rnd -= opt.roll[i].p; if(rnd<=0){ hitIdx = i; hit = opt.roll[i]; break; } }
+    applyFx(hit.fx);
+    if(hit.flag) for(var fi=0;fi<hit.flag.length;fi++) g.flags[hit.flag[fi]] = true;
+    if(hit.say) say = hit.say;
+  }
+  if(opt.flag)   for(var j=0;j<opt.flag.length;j++)   g.flags[opt.flag[j]] = true;
+  if(opt.unflag) for(var k2=0;k2<opt.unflag.length;k2++) delete g.flags[opt.unflag[k2]];
+  if(!ev.repeat) g.used.push(ev.id);
+  g.log.push({sem:g.sem, title:ev.title, text: opt.text + (say ? ' —— '+say : '')});
+  return {deltas:deltas, roll:(opt.roll ? {idx:hitIdx, total:opt.roll.length} : null), say:say};
+}
+
+// 考试基础分 + 隐藏加成
+function examBase(g){
+  var s = g.stats;
+  var b = 100 + s.grades*5.6 + s.talent*0.6 + (s.health-50)*0.5;
+  var bonuses = [];
+  if(g.flags.camp){         b += 10; bonuses.push('名校夏令营 +10'); }
+  if(g.flags.career_plan){  b += 5;  bonuses.push('生涯规划 +5'); }
+  return {base:b, bonuses:bonuses};
+}
+
+// 学期末考试(第 6 学期为高考)
+function runExam(g){
+  var isGaokao = (g.sem === 6);
+  var d = DIFF[g.diff];
+  var eb = examBase(g);
+  var score = Math.round(clamp(eb.base + (g.rng()*2-1)*d.rand, 100, 750));
+  var delta = 0, notes = [];
+  if(!isGaokao){
+    // 稳定发挥 → 成绩上升;失常 → 成绩下降
+    delta = Math.round(clamp((score - eb.base)/10, -5, 5));
+    g.stats.grades = clamp(g.stats.grades + delta, 0, 100);
+    // 高二下:学业水平考试(会考)
+    if(g.sem === 4){
+      if(g.stats.grades >= 50){ g.stats.fame = clamp(g.stats.fame+2, 0, 100); notes.push('会考全 A,「学霸」名声 +2 知名度'); }
+      else { g.stats.health = clamp(g.stats.health-4, 0, 100); notes.push('会考有科目没过,补考压力 -4 健康心态'); }
+    }
+    // 高三上:竞赛结果公布(按竞赛能力值定省奖,省奖降对应高考门槛)
+    if(g.sem === 5 && g.flags.contest_enabled && !g.award){
+      var c = g.stats.contest || 0;
+      if(c >= 68){ g.award='shengdui'; g.stats.fame = clamp(g.stats.fame+12, 0, 100); notes.push('竞赛结果公布:省队!清北门槛 690→580、C9 门槛 650→555,知名度 +12'); }
+      else if(c >= 55){ g.award='shengyi'; g.stats.fame = clamp(g.stats.fame+9, 0, 100); notes.push('竞赛结果公布:省一!C9 门槛 650→585,知名度 +9'); }
+      else if(c >= 42){ g.award='shenger'; g.stats.fame = clamp(g.stats.fame+6, 0, 100); notes.push('竞赛结果公布:省二!985 门槛 620→565,知名度 +6'); }
+      else if(c >= 28){ g.award='shengsan'; notes.push('竞赛结果公布:省三,无事发生'); }
+      else { g.award='wu'; g.stats.health = clamp(g.stats.health-6, 0, 100); notes.push('竞赛结果公布:什么奖都没拿到,心态 -6'); }
+      g.flags['contest_'+g.award] = true;
+    }
+  }
+  g.scores.push({sem:g.sem, score:score, gaokao:isGaokao});
+  return {score:score, isGaokao:isGaokao, delta:delta, notes:notes, bonuses:eb.bonuses};
+}
+
+function rankText(score, isGaokao){
+  if(isGaokao){
+    if(score>=690) return '全省前 200 名';
+    if(score>=620) return '全省前 5000 名';
+    if(score>=575) return '全省前 3 万名';
+    if(score>=530) return '全省前 8 万名';
+    if(score>=470) return '全省前 15 万名';
+    if(score>=300) return '全省中游';
+    return '全省垫底';
+  }
+  if(score>=650) return '年级前 10';
+  if(score>=600) return '年级前 50';
+  if(score>=550) return '年级前 100';
+  if(score>=480) return '年级中上游';
+  if(score>=400) return '年级中游';
+  return '年级下游';
+}
+
+function determineEnding(g, score){
+  for(var i=0;i<ENDINGS.length;i++){
+    if(ENDINGS[i].cond({s:g.stats, f:g.flags, score:score, award:g.award})) return ENDINGS[i];
+  }
+  return ENDINGS[ENDINGS.length-1]; // 不可能走到这里,防御
+}
+
+// 自动游玩一整局(测试用):每个事件随机选一个可选项
+function autoplayGame(g){
+  while(g.sem < 6){
+    semesterStart(g);
+    var evs = drawEvents(g);
+    if(evs.length === 0) throw new Error('semester '+g.sem+' pool empty');
+    for(var i=0;i<evs.length;i++){
+      var opts = eligibleOpts(g, evs[i]);
+      if(opts.length === 0) throw new Error('event '+evs[i].id+' no eligible option');
+      var pick = opts[Math.floor(g.rng()*opts.length)];
+      applyOption(g, evs[i], pick);
+    }
+    runExam(g);
+  }
+  var last = g.scores[g.scores.length-1];
+  return {score:last.score, ending:determineEnding(g, last.score), g:g};
+}
+/*__ENGINE_END__*/
+
+// ============ UI 层 ============
+var G = null;            // 当前游戏
+var pendingEvents = [];  // 本学期待处理事件
+var chosenDiff = 'normal';
+var chosenSeed = null;
+var selOrigin = null;
+var cardCanvas = document.createElement('canvas');
+var FONT = '"PingFang SC","Microsoft YaHei",system-ui,sans-serif';
+
+var store = {
+  get: function(k, d){ try{ var v = localStorage.getItem(k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set: function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+};
+
+function $(sel){ return document.querySelector(sel); }
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function statMeta(key){ for(var i=0;i<STAT_META.length;i++) if(STAT_META[i].key===key) return STAT_META[i]; return {icon:'?',name:key}; }
+function endingById(id){ for(var i=0;i<ENDINGS.length;i++) if(ENDINGS[i].id===id) return ENDINGS[i]; return {icon:'❓',name:id,desc:''}; }
+function originById(id){ for(var i=0;i<ORIGINS.length;i++) if(ORIGINS[i].id===id) return ORIGINS[i]; return {icon:'❓',name:id}; }
+
+// ---------- 主页 ----------
+function initHome(){
+  var dg = document.getElementById('diff-group');
+  var html = '';
+  for(var k in DIFF){
+    var d = DIFF[k];
+    html += '<button class="diff-btn'+(k===chosenDiff?' sel':'')+'" data-d="'+k+'">'+
+      '<div class="dname">'+d.icon+' '+d.name+'</div>'+
+      '<div class="ddesc">'+d.desc+'</div></button>';
+  }
+  dg.innerHTML = html;
+  dg.querySelectorAll('.diff-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      chosenDiff = b.dataset.d;
+      dg.querySelectorAll('.diff-btn').forEach(function(x){ x.classList.toggle('sel', x===b); });
+    });
+  });
+  document.getElementById('seed-dice').addEventListener('click', function(){
+    document.getElementById('seed-input').value = String(1 + Math.floor(Math.random()*999999));
+  });
+  document.getElementById('btn-start').addEventListener('click', function(){
+    var v = document.getElementById('seed-input').value.trim();
+    if(v && /^\d+$/.test(v)){ chosenSeed = parseInt(v,10)>>>0 || 1; }
+    else {
+      chosenSeed = 1 + Math.floor(Math.random()*999999);
+      document.getElementById('seed-input').value = String(chosenSeed);
+    }
+    renderOrigins();
+    showScreen('screen-origin');
+  });
+  document.getElementById('btn-endings').addEventListener('click', openEndingsModal);
+  document.getElementById('btn-records').addEventListener('click', openRecordsModal);
+  document.getElementById('btn-help').addEventListener('click', openHelpModal);
+}
+
+// ---------- 出身选择 ----------
+function renderOrigins(){
+  selOrigin = null;
+  var ok = document.getElementById('btn-origin-ok');
+  ok.disabled = true;
+  var grid = document.getElementById('origin-grid');
+  var html = '';
+  ORIGINS.forEach(function(o){
+    html += '<button class="origin-card" data-id="'+o.id+'">'+
+      '<div class="oicon">'+o.icon+'</div>'+
+      '<div class="oname">'+o.name+'</div>'+
+      '<span class="otag">'+o.tag+'</span>'+
+      '<div class="odesc">'+o.desc+'</div>'+
+      '<div class="ostats">初始 📖'+o.grades+' 💰'+o.money+' 🤝'+o.relation+' ⭐'+o.fame+' ❤️'+o.health+
+      '<br>天赋 🧬'+o.talent[0]+'~'+o.talent[1]+'(按种子浮动)</div>'+
+      '</button>';
+  });
+  grid.innerHTML = html;
+  grid.querySelectorAll('.origin-card').forEach(function(b){
+    b.addEventListener('click', function(){
+      selOrigin = b.dataset.id;
+      grid.querySelectorAll('.origin-card').forEach(function(x){ x.classList.toggle('sel', x===b); });
+      ok.disabled = false;
+    });
+  });
+  $('#origin-sub').innerHTML = '种子 <b>'+chosenSeed+'</b> · <b>'+DIFF[chosenDiff].name+'</b>难度 ｜ 出身决定起点,但决定不了终点';
+}
+function startGame(){
+  G = createGame(chosenSeed, chosenDiff, selOrigin);
+  semesterStart(G);
+  G.log.push({sem:0, title:'入学', text:'你踏入了 '+G.school+' 的校门'});
+  updateHud();
+  renderStats();
+  pendingEvents = drawEvents(G);
+  showEvent(0);
+  showScreen('screen-game');
+}
+document.getElementById('btn-origin-ok').addEventListener('click', startGame);
+
+// ---------- 游戏主界面 ----------
+function updateHud(){
+  $('#sem-badge').innerHTML = SEM_NAMES[G.sem-1] + ' <small>'+G.sem+'/6</small>';
+  $('#school-line').textContent = '🏫 ' + G.school;
+  var dots = '';
+  for(var i=1;i<=6;i++){
+    var cls = i<G.sem ? 'done' : (i===G.sem ? 'cur' : '');
+    dots += '<span class="dot '+cls+'"></span>';
+  }
+  $('#sem-dots').innerHTML = dots;
+}
+function renderStats(deltas){
+  var html = '';
+  for(var i=0;i<STAT_META.length;i++){
+    var m = STAT_META[i];
+    if(m.key==='contest' && G.stats.contest===undefined) continue;
+    var v = G.stats[m.key];
+    var chip = '';
+    if(deltas && deltas[m.key] && deltas[m.key]!==0){
+      var d = deltas[m.key];
+      chip = '<span class="delta-chip '+(d>0?'up':'down')+'">'+(d>0?'+':'')+d+'</span>';
+    }
+    html += '<div class="stat-row">'+
+      '<span class="stat-icon">'+m.icon+'</span>'+
+      '<span class="stat-name">'+m.name+'</span>'+
+      '<div class="stat-bar"><div class="stat-fill" style="width:'+v+'%;background:'+m.color+'"></div></div>'+
+      '<span class="stat-val">'+v+'</span>'+chip+
+      '</div>';
+  }
+  var fl = Object.keys(G.flags);
+  if(fl.length){
+    html += '<div class="flags-line">';
+    fl.forEach(function(f){ if(FLAG_META[f]) html += '<span class="flag-chip">'+FLAG_META[f]+'</span>'; });
+    html += '</div>';
+  }
+  $('#stats-panel').innerHTML = html;
+}
+function showEvent(idx){
+  if(idx >= pendingEvents.length){ renderExam(); return; }
+  var ev = pendingEvents[idx];
+  var opts = eligibleOpts(G, ev);
+  var showFx = DIFF[G.diff].showFx;
+  var html = '';
+  for(var i=0;i<ev.opts.length;i++){
+    var o = ev.opts[i];
+    var ok = opts.indexOf(o) >= 0;
+    var fxLine = '';
+    if(showFx && o.fx){
+      var parts = [];
+      for(var k in o.fx){
+        var v = o.fx[k];
+        parts.push(statMeta(k).icon+' '+(v>0?'+':'')+v);
+      }
+      fxLine += '<div class="fx-line">'+parts.join(' · ')+'</div>';
+    }
+    if(showFx && o.flag){
+      var fl2 = o.flag.map(function(f){ return FLAG_META[f]||f; }).join(' ');
+      fxLine += '<div class="fx-line">获得状态:'+fl2+'</div>';
+    }
+    if(showFx && o.initContest) fxLine += '<div class="fx-line">启用竞赛能力值 🏆</div>';
+    if(showFx && o.roll){
+      var rl = o.roll.map(function(r){ return Math.round(r.p*100)+'% '+(r.say||''); }).join(' · ');
+      fxLine += '<div class="fx-line">概率:'+rl+'</div>';
+    }
+    var needLine = '';
+    if(!ok && o.need){
+      var nl = [];
+      for(var k2 in o.need){
+        if(k2==='flag'){ nl.push('状态「'+ (FLAG_META[o.need.flag]||o.need.flag) +'」'); }
+        else nl.push(statMeta(k2).icon+'≥'+o.need[k2]);
+      }
+      needLine = '<div class="need-line">需要 '+nl.join(' · ')+'</div>';
+    }
+    html += '<button class="opt-btn" data-i="'+i+'"'+(ok?'':' disabled')+'>'+o.text+fxLine+needLine+'</button>';
+  }
+  $('#event-panel').innerHTML =
+    '<div class="event-sem-tag">'+SEM_NAMES[G.sem-1]+' · 事件 '+(idx+1)+' / '+pendingEvents.length+'</div>'+
+    '<div class="event-title">'+ev.icon+' '+ev.title+'</div>'+
+    '<div class="event-desc">'+ev.desc+'</div>'+html;
+  $('#event-panel').querySelectorAll('.opt-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var o = ev.opts[+b.dataset.i];
+      var res = applyOption(G, ev, o);
+      function proceed(){
+        renderStats(res.deltas);
+        showEvent(idx+1);
+      }
+      if(res.roll){ playRollAnimation(ev, o, res, proceed); }
+      else { proceed(); }
+    });
+  });
+}
+
+// ---------- 概率抽奖动画(结果已由种子决定,这里只是揭晓过程) ----------
+function playRollAnimation(ev, opt, res, done){
+  var overlay = document.getElementById('roll-overlay');
+  var hard = !DIFF[G.diff].showFx;
+  var branches = opt.roll;
+  var hitIdx = res.roll.idx;
+  var listHtml = '';
+  for(var i=0;i<branches.length;i++){
+    listHtml += '<div class="roll-row" data-i="'+i+'"><span>'+branches[i].say+'</span>'+
+      (hard ? '' : '<span class="rp">'+Math.round(branches[i].p*100)+'%</span>')+'</div>';
+  }
+  document.getElementById('roll-list').innerHTML = listHtml;
+  document.getElementById('roll-sub').textContent = ev.icon+' '+ev.title+' · 你选择了:「'+opt.text+'」';
+  var win = document.getElementById('roll-window');
+  win.className = 'roll-window';
+  document.getElementById('roll-result').innerHTML = '';
+  overlay.classList.add('show');
+  var rows = overlay.querySelectorAll('.roll-row');
+  var closed = false, finished = false;
+  function finish(){
+    if(closed) return;
+    closed = true;
+    overlay.classList.remove('show');
+    done();
+  }
+  function land(){
+    if(finished) return;
+    finished = true;
+    win.classList.add('hit');
+    win.textContent = '🎯 ' + branches[hitIdx].say;
+    rows.forEach(function(r){ r.classList.toggle('active', false); r.classList.toggle('hit', +r.dataset.i === hitIdx); });
+    var fxLine = '';
+    var hf = branches[hitIdx].fx;
+    if(hf){
+      var parts = [];
+      for(var k in hf){
+        var v = hf[k];
+        parts.push(statMeta(k).icon+' '+(v>0?'+':'')+v);
+      }
+      fxLine = ' <span style="font-weight:600">('+parts.join(' · ')+')</span>';
+    }
+    document.getElementById('roll-result').innerHTML = '—— 中了!——'+fxLine;
+  }
+  function tick(){
+    if(finished) return;
+    var steps = branches.length*2 + hitIdx + 1; // 至少转两圈再停
+    var step = 0;
+    (function spin(){
+      if(finished || closed) return;
+      if(step < steps){
+        var cur = step % branches.length;
+        win.textContent = branches[cur].say;
+        win.classList.remove('pop'); void win.offsetWidth; win.classList.add('pop');
+        rows.forEach(function(r){ r.classList.toggle('active', +r.dataset.i === cur); });
+        step++;
+        setTimeout(spin, 60 + step*step*9);
+      } else {
+        land();
+        setTimeout(finish, 1200);
+      }
+    })();
+  }
+  tick();
+  overlay.onclick = function(){
+    if(finished){ finish(); }
+    else { land(); setTimeout(finish, 800); }
+  };
+}
+
+// ---------- 考试 ----------
+function renderExam(){
+  var r = runExam(G);
+  var emoji = r.isGaokao ? '🎓' : (G.sem===5 ? '📊' : (G.sem===4 ? '📜' : '📝'));
+  var items = [];
+  if(r.delta>0) items.push('发挥出色,成绩 <b>+'+r.delta+'</b>');
+  else if(r.delta<0) items.push('发挥不佳,成绩 <b>'+r.delta+'</b>');
+  else items.push('发挥平稳,成绩不变');
+  if(r.bonuses.length) items.push('隐藏加成:'+r.bonuses.join('、'));
+  r.notes.forEach(function(n){ items.push(n); });
+  var notes = '';
+  items.forEach(function(n){ notes += '<li>'+n+'</li>'; });
+  $('#exam-panel').innerHTML =
+    '<div class="exam-emoji">'+emoji+'</div>'+
+    '<div class="exam-name">'+SEM_NAMES[G.sem-1]+' · '+SEM_EXAMS[G.sem-1]+'</div>'+
+    '<div class="exam-score">'+r.score+'<small> 分</small></div>'+
+    '<div class="exam-rank">'+rankText(r.score, r.isGaokao)+'</div>'+
+    '<ul class="exam-notes">'+notes+'</ul>'+
+    '<button class="btn primary" id="btn-exam-next" style="margin-top:14px">'+(r.isGaokao?'查看结局 →':'进入下一学期 →')+'</button>';
+  $('#btn-exam-next').addEventListener('click', function(){
+    if(r.isGaokao){ renderStats(); doEnding(r); }
+    else {
+      semesterStart(G);
+      updateHud();
+      renderStats();
+      pendingEvents = drawEvents(G);
+      showEvent(0);
+      showScreen('screen-game');
+    }
+  });
+  showScreen('screen-exam');
+}
+
+// ---------- 结局 ----------
+function doEnding(r){
+  var ending = determineEnding(G, r.score);
+  var endings = store.get('hs_sim.endings', {});
+  endings[ending.id] = true;
+  store.set('hs_sim.endings', endings);
+  var records = store.get('hs_sim.records', []);
+  records.unshift({seed:G.seed, diff:G.diff, origin:G.origin, ending:ending.id, score:r.score, t:Date.now()});
+  if(records.length>30) records.length = 30;
+  store.set('hs_sim.records', records);
+  $('#ending-icon').textContent = ending.icon;
+  $('#ending-name').textContent = ending.name;
+  $('#ending-desc').innerHTML = '<b style="color:#2f855a">🎓 高考总分 '+r.score+' 分</b> · '+rankText(r.score,true)+'<br><br>'+ending.desc;
+  $('#name-input').value = '';
+  drawCard('');
+  showScreen('screen-ending');
+}
+$('#btn-again').addEventListener('click', function(){ renderOrigins(); showScreen('screen-origin'); });
+$('#btn-rehome').addEventListener('click', function(){ showScreen('screen-home'); });
+$('#btn-ending-compendium').addEventListener('click', openEndingsModal);
+$('#name-input').addEventListener('input', function(){ drawCard(this.value.trim()); });
+
+// ---------- 总结卡片(Canvas) ----------
+function fitText(ctx, text, maxW){
+  if(ctx.measureText(text).width <= maxW) return text;
+  while(text.length>1 && ctx.measureText(text+'…').width > maxW) text = text.slice(0,-1);
+  return text+'…';
+}
+function rr(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+function drawCard(name){
+  var W = 720, H = 1200, S = 2;
+  var cv = cardCanvas;
+  cv.width = W*S; cv.height = H*S;
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  var last = G.scores[G.scores.length-1];
+  var ending = determineEnding(G, last.score);
+  var rank = rankText(last.score, true);
+  // 背景
+  var bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#fffdf4'); bg.addColorStop(1, '#e7f2ea');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(47,133,90,.05)'; ctx.beginPath(); ctx.arc(W, 0, 280, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(221,107,32,.04)'; ctx.beginPath(); ctx.arc(0, H, 320, 0, Math.PI*2); ctx.fill();
+  // 顶部横幅
+  ctx.fillStyle = '#2f855a'; ctx.fillRect(0, 0, W, 140);
+  ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(0, 100, W, 40);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 42px '+FONT;
+  ctx.fillText('🎒 高中生涯总结', W/2, 80);
+  ctx.font = '24px '+FONT; ctx.fillStyle = 'rgba(255,255,255,.9)';
+  ctx.fillText(G.school, W/2, 124);
+  // 姓名
+  ctx.fillStyle = '#2d3748'; ctx.font = 'bold 40px '+FONT;
+  ctx.fillText(fitText(ctx, name || '未命名', W-160), W/2, 206);
+  // 元信息
+  ctx.font = '22px '+FONT; ctx.fillStyle = '#718096';
+  ctx.fillText(G.originObj.name+' · '+DIFF[G.diff].name+'难度 · 种子 '+G.seed, W/2, 248);
+  // 结局徽章
+  var label = ending.icon+' '+ending.name;
+  ctx.font = 'bold 28px '+FONT;
+  var tw = ctx.measureText(label).width;
+  var bw = tw + 56, bx = (W-bw)/2, by = 278, bh = 54;
+  ctx.fillStyle = '#fff7db'; ctx.strokeStyle = '#dd6b20'; ctx.lineWidth = 2;
+  rr(ctx, bx, by, bw, bh, 27); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#9c4221'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, W/2, by+bh/2+2);
+  ctx.textBaseline = 'alphabetic';
+  // 高考分数
+  ctx.fillStyle = '#4a5568'; ctx.font = '24px '+FONT;
+  ctx.fillText('高考总分', W/2, 414);
+  ctx.fillStyle = '#2f855a'; ctx.font = 'bold 96px '+FONT;
+  var sc = String(last.score);
+  ctx.fillText(sc, W/2 - 26, 508);
+  ctx.font = '28px '+FONT; ctx.fillStyle = '#718096';
+  ctx.fillText('分', W/2 + ctx.measureText(sc).width/2 + 18, 500);
+  ctx.font = '24px '+FONT; ctx.fillStyle = '#dd6b20';
+  ctx.fillText(rank, W/2, 556);
+  // 分隔线
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(80, 596); ctx.lineTo(W-80, 596); ctx.stroke();
+  // 数值
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 26px '+FONT; ctx.fillStyle = '#2d3748';
+  ctx.fillText('高中三年的你', 80, 646);
+  var metaList = STAT_META.filter(function(m){ return m.key!=='contest' || G.stats.contest !== undefined; });
+  for(var i=0;i<metaList.length;i++){
+    var m = metaList[i];
+    var v = G.stats[m.key];
+    var y = 668 + i*48;
+    ctx.font = '22px '+FONT; ctx.fillStyle = '#4a5568';
+    ctx.fillText(m.icon+' '+m.name, 80, y+8);
+    ctx.fillStyle = '#e2e8f0';
+    rr(ctx, 250, y-12, 340, 16, 8); ctx.fill();
+    ctx.fillStyle = m.color;
+    rr(ctx, 250, y-12, Math.max(8, 340*v/100), 16, 8); ctx.fill();
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 24px '+FONT; ctx.fillStyle = '#2d3748';
+    ctx.fillText(String(v), W-80, y+9);
+    ctx.textAlign = 'left';
+  }
+  // 关键回忆
+  ctx.font = 'bold 26px '+FONT; ctx.fillStyle = '#2d3748';
+  ctx.fillText('关键回忆', 80, 1042);
+  var entries = [];
+  if(G.log.length > 4) entries.push({line:'…… 共经历 '+G.log.length+' 次选择'});
+  var tail = G.log.slice(-2);
+  tail.forEach(function(e){
+    var semName = e.sem===0 ? '入学' : SEM_NAMES[e.sem-1];
+    entries.push({line: semName+' · '+e.title+' — '+e.text});
+  });
+  ctx.font = '20px '+FONT; ctx.fillStyle = '#4a5568';
+  for(var j=0;j<entries.length;j++){
+    ctx.fillText(fitText(ctx, entries[j].line, W-160), 80, 1090 + j*44);
+  }
+  // 页脚
+  ctx.textAlign = 'center';
+  ctx.font = '20px '+FONT; ctx.fillStyle = '#a0aec0';
+  ctx.fillText('高中生涯模拟器 · 愿你前程似锦', W/2, 1186);
+  $('#card-img').src = cv.toDataURL('image/png');
+}
+
+// ---------- 弹窗 ----------
+function openModal(title, html){
+  $('#modal-title').textContent = title;
+  $('#modal-body').innerHTML = html;
+  $('#modal-overlay').classList.add('show');
+}
+function closeModal(){ $('#modal-overlay').classList.remove('show'); }
+$('#modal-close').addEventListener('click', closeModal);
+$('#modal-overlay').addEventListener('click', function(e){ if(e.target === this) closeModal(); });
+
+function openEndingsModal(){
+  var endings = store.get('hs_sim.endings', {});
+  var n = 0, html = '';
+  ENDINGS.forEach(function(e){
+    var un = !!endings[e.id];
+    if(un) n++;
+    html += '<div class="end-item '+(un?'unlocked':'locked')+'">'+
+      '<div class="ename"><span class="eicon">'+(un?e.icon:'❓')+'</span>'+(un?e.name:'???')+'</div>'+
+      '<div class="ehint">'+(un?e.desc:e.hint)+'</div></div>';
+  });
+  openModal('📖 结局图鉴', '<div style="font-size:13px;color:#718096;margin-bottom:10px">已解锁 '+n+' / '+ENDINGS.length+' 个结局</div><div class="end-grid">'+html+'</div>');
+}
+function openRecordsModal(){
+  var records = store.get('hs_sim.records', []);
+  var html = '';
+  if(!records.length) html = '<div style="color:#718096;text-align:center;padding:18px 0">还没有档案,快去开启你的第一段人生吧</div>';
+  records.forEach(function(r){
+    var e = endingById(r.ending), o = originById(r.origin);
+    html += '<div class="rec-item"><b>'+e.icon+' '+e.name+'</b> · '+r.score+' 分<br>'+
+      '出身:'+o.icon+' '+o.name+' · '+DIFF[r.diff].name+' · 种子 '+r.seed+' · '+new Date(r.t).toLocaleDateString('zh-CN')+'</div>';
+  });
+  if(records.length) html += '<button class="btn ghost" id="btn-clear-records" style="width:100%;color:#c53030;border-color:#c53030">🗑 清空档案</button>';
+  openModal('🗂 生涯档案', html);
+  var btn = document.getElementById('btn-clear-records');
+  if(btn) btn.addEventListener('click', function(){
+    if(confirm('确定清空所有生涯档案?')){
+      store.set('hs_sim.records', []);
+      openRecordsModal();
+    }
+  });
+}
+function openHelpModal(){
+  openModal('❓ 玩法说明',
+  '<div class="help-block"><b>🎯 目标</b><br>在高中六个学期里面对各种事件做出选择,经营你的六个数值,最终在高考揭晓你的结局。共有 '+ENDINGS.length+' 个结局等你解锁。</div>'+
+  '<div class="help-block"><b>📊 六个数值</b><br>🧬天赋(基本恒定,决定成长速度)· 📖成绩(决定高考结果)· 💰金钱(门控消费类选项)· 🤝关系(同学老师家人的人缘)· ⭐知名度(校园内外的名气)· ❤️健康心态(过低会出问题,也影响考试发挥)。数值范围 0~100。</div>'+
+  '<div class="help-block"><b>📅 学期</b><br>每学期会遇到若干事件(数量由难度决定),每个选择都会改变数值;学期末有考试,发挥好坏会反馈到成绩。特殊节点:高一下选科、高二会考、高三一模,以及最后的<b>高考</b>。</div>'+
+  '<div class="help-block"><b>🌱 种子</b><br>同一种子 + 同一出身 + 同一难度 = 完全相同的人生。把种子分享给朋友,体验彼此的经历。</div>'+
+  '<div class="help-block"><b>🛣️ 特殊路线</b><br>· 竞赛:天赋 65+ 且成绩 55+ 时,教练会邀请你走竞赛路线(高三前);接受后启用竞赛能力值。走竞赛后每学期会遇到竞赛外培课,晚自习也可刷竞赛题。高三一模公布省奖:省队降清北/C9 门槛、省一降 C9 门槛、省二降 985 门槛。竞赛生出身自带竞赛路线<br>· 留学 / 创业 / 继承家业:钱多好办事<br>· 网红:知名度够高时抓住流量机会</div>'+
+  '<div class="help-block"><b>💾 保存</b><br>结局图鉴与生涯档案保存在本机浏览器,换设备不互通。结局卡片可长按保存图片分享。</div>');
+}
+
+// ---------- 启动 ----------
+initHome();
+
+</script>
+</body>
+</html>
