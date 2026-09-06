@@ -256,6 +256,7 @@ var FLAG_META = {
   abroad:'留学路线 ✈️', biz:'小生意人 💼', biz_small:'小打小闹 🛒', internet:'博主运营 📱',
   brave:'正义伙伴 🦸', stage:'舞台经验 🎤', singer:'校园歌手 🎙️', coder:'编程入门 💻',
   camp:'名校夏令营 ⛺', career_plan:'生涯规划 📋', love_confess:'毕业告白 💌',
+  yiyu:'抑郁困扰 🌧️', yiyu_treated:'正在治疗 💊',
 };
 
 function mulberry32(seed){
@@ -706,10 +707,10 @@ var EVENTS = [
   {text:'接受挑战,开启竞赛之路', fx:{fame:4,grades:-3}, initContest:true, flag:['contest_enabled']},
   {text:'婉拒,专心备战高考', fx:{grades:2}},
  ]},
-{id:'ev_waike', sem:[1,2,3,4,5], icon:'🏫', title:'竞赛外培课', desc:'竞赛外培课开始报名,价格不低,不少同学都去了。', cond:{flag:'contest_enabled'}, forceEvery:true, forceCond:{flag:'contest_enabled'}, repeat:true,
+{id:'ev_waike', sem:[1,2,3,4,5], icon:'🏫', title:'竞赛外培课', desc:'竞赛外培课开始报名,价格不低,不少同学都去了。', cond:{flag:'contest_enabled'}, repeat:true, w:5,
  opts:[
   {text:'报名参加', fx:{money:-10,grades:1}, need:{money:10}, roll:[
-    {p:0.6, fx:{contest:8}, say:'学到了不少东西'},
+    {p:0.6, fx:{contest:12}, say:'学到了不少东西'},
     {p:0.4, fx:{health:3,relation:3}, say:'和同学一起划水,混得很开心'}]},
   {text:'不去了,自己练', fx:{relation:-3}},
  ]},
@@ -783,6 +784,20 @@ var EVENTS = [
   {text:'假装没看见,默默走开', fx:{health:4,grades:-1}},
   {text:'上去打招呼起哄', fx:{relation:3,health:2,grades:-2}},
  ]},
+{id:'ev_baqi', sem:[1,2,3,4,5], icon:'🩹', title:'被针对了', desc:'不知从什么时候起,班上有几个同学开始针对你:起外号、扔你的东西、在群里阴阳怪气。', cond:{statMax:{relation:30}}, w:3,
+ opts:[
+  {text:'告诉班主任和家长', fx:{relation:6,health:4,grades:2}},
+  {text:'正面刚回去', fx:{fame:4,relation:2,health:-5}},
+  {text:'默默忍受', fx:{health:-10,grades:-5}},
+ ]},
+{id:'ev_yiyu', sem:[1,2,3,4,5,6], icon:'🌧️', title:'心理状态预警', desc:'你最近失眠、心慌、对什么都提不起兴趣,像陷进了一片沼泽。心理老师说,这可能是抑郁的信号。', forceEvery:true, forceCond:{statMax:{health:10}, notFlag:'yiyu'},
+ opts:[
+  {text:'告诉父母,去看心理医生', fx:{money:-25,health:20,grades:-6}, need:{money:25}, flag:['yiyu','yiyu_treated']},
+  {text:'找学校心理老师聊聊(免费)', fx:{health:12,grades:-4,relation:2}, flag:['yiyu','yiyu_treated']},
+  {text:'觉得只是压力大,自己硬扛', fx:{health:-4}, flag:['yiyu'], roll:[
+    {p:0.5, fx:{health:6}, say:'竟然扛过去了,状态有所好转'},
+    {p:0.5, fx:{health:-8}, say:'状态越来越差'}]},
+ ]},
 // ---------- 通用 ----------
 {id:'ev_shengbing', sem:[1,2,3,4,5,6], icon:'🤒', title:'换季生病', desc:'换季时节,你病倒了,发烧 38 度。',
  opts:[
@@ -806,6 +821,12 @@ var EVENTS = [
 // ============ 结局数据(按优先级排序,取第一个满足者) ============
 // award(竞赛省奖)会降低对应高校的高考门槛:省队降清北/C9,省一降 C9,省二降 985
 var ENDINGS = [
+ {id:'yiyu_dead', icon:'🕯️', name:'那根断掉的弦', hint:'心情长期过低且未接受治疗(最沉重的结局)',
+  cond:function(g){return g.f.yiyu && !g.f.yiyu_treated && g.s.health<3;},
+  desc:'那根弦还是断了,TA 没有等到高考之后。如果现实中的你或身边的朋友正深陷这样的泥潭,请一定伸出手求助——全国统一心理援助热线 12356,24 小时都有人接听。'},
+ {id:'yiyu_live', icon:'🌧️', name:'抑郁的青春', hint:'心情长期过低且未接受治疗',
+  cond:function(g){return g.f.yiyu && !g.f.yiyu_treated;},
+  desc:'你带着抑郁走完了高中,像在雾里跑步,成绩一落千丈。但你还在,还愿意继续走下去。求助不丢人——全国统一心理援助热线 12356。'},
  {id:'zhuangyuan', icon:'👑', name:'全省状元',   hint:'高考 720 分以上',
   cond:function(g){return g.score>=720;},
   desc:'高考全省前十,状元之姿!媒体采访、名校争抢、全村鞭炮齐鸣。'},
@@ -891,9 +912,11 @@ function meetsCond(g, cond){
 function semesterStart(g){
   var o = g.originObj;
   g.sem++;
-  g.stats.grades  = clamp(g.stats.grades  + Math.round(g.stats.talent/50), 0, 100);
+  // 天赋带来自然进步;关系影响学习状态(好人缘有人帮,被孤立学不进去)
+  g.stats.grades  = clamp(g.stats.grades  + Math.round(g.stats.talent/50) + Math.round((g.stats.relation-50)/30), 0, 100);
   g.stats.health  = clamp(g.stats.health  - o.stress, 0, 100);
   g.stats.money   = clamp(g.stats.money   + o.pocket, 0, 100);
+  if(g.flags.yiyu && !g.flags.yiyu_treated) g.stats.health = clamp(g.stats.health - 2, 0, 100); // 抑郁未治疗,持续消耗
   if(g.stats.health < 30) g.stats.grades = clamp(g.stats.grades - 2, 0, 100); // 状态崩了影响学习
 }
 
@@ -989,7 +1012,7 @@ function applyOption(g, ev, opt){
 // 考试基础分 + 隐藏加成
 function examBase(g){
   var s = g.stats;
-  var b = 100 + s.grades*5.6 + s.talent*0.6 + (s.health-50)*0.5;
+  var b = 100 + s.grades*6.0 + s.talent*0.6 + (s.health-50)*0.5 + (s.relation-50)*0.3;
   var bonuses = [];
   if(g.flags.camp){         b += 10; bonuses.push('名校夏令营 +10'); }
   if(g.flags.career_plan){  b += 5;  bonuses.push('生涯规划 +5'); }
@@ -1015,7 +1038,7 @@ function runExam(g){
     // 高三上:竞赛结果公布(按竞赛能力值定省奖,省奖降对应高考门槛)
     if(g.sem === 5 && g.flags.contest_enabled && !g.award){
       var c = g.stats.contest || 0;
-      if(c >= 68){ g.award='shengdui'; g.stats.fame = clamp(g.stats.fame+12, 0, 100); notes.push('竞赛结果公布:省队!清北门槛 690→580、C9 门槛 650→555,知名度 +12'); }
+      if(c >= 60){ g.award='shengdui'; g.stats.fame = clamp(g.stats.fame+12, 0, 100); notes.push('竞赛结果公布:省队!清北门槛 690→580、C9 门槛 650→555,知名度 +12'); }
       else if(c >= 55){ g.award='shengyi'; g.stats.fame = clamp(g.stats.fame+9, 0, 100); notes.push('竞赛结果公布:省一!C9 门槛 650→585,知名度 +9'); }
       else if(c >= 42){ g.award='shenger'; g.stats.fame = clamp(g.stats.fame+6, 0, 100); notes.push('竞赛结果公布:省二!985 门槛 620→565,知名度 +6'); }
       else if(c >= 28){ g.award='shengsan'; notes.push('竞赛结果公布:省三,无事发生'); }
@@ -1538,7 +1561,8 @@ function openRecordsModal(){
 function openHelpModal(){
   openModal('❓ 玩法说明',
   '<div class="help-block"><b>🎯 目标</b><br>在高中六个学期里面对各种事件做出选择,经营你的六个数值,最终在高考揭晓你的结局。共有 '+ENDINGS.length+' 个结局等你解锁。</div>'+
-  '<div class="help-block"><b>📊 六个数值</b><br>🧬天赋(基本恒定,决定成长速度)· 📖成绩(决定高考结果)· 💰金钱(门控消费类选项)· 🤝关系(同学老师家人的人缘)· ⭐知名度(校园内外的名气)· ❤️健康心态(过低会出问题,也影响考试发挥)。数值范围 0~100。</div>'+
+  '<div class="help-block"><b>📊 六个数值</b><br>🧬天赋(基本恒定,决定成长速度)· 📖成绩(决定高考结果)· 💰金钱(门控消费类选项)· 🤝关系(影响学习状态与考试发挥,过低容易被霸凌)· ⭐知名度(校园内外的名气)· ❤️健康心态(过低会出问题,也影响考试发挥)。数值范围 0~100。</div>'+
+  '<div class="help-block"><b>⚠️ 心理与霸凌</b><br>关系太低可能遭遇小团体针对;心情长期过低会触发心理预警,花钱就医可以治疗(但成绩仍会下滑);不治疗会有沉重的结局。</div>'+
   '<div class="help-block"><b>📅 学期</b><br>每学期会遇到若干事件(数量由难度决定),每个选择都会改变数值;学期末有考试,发挥好坏会反馈到成绩。特殊节点:高一下选科、高二会考、高三一模,以及最后的<b>高考</b>。</div>'+
   '<div class="help-block"><b>🌱 种子</b><br>同一种子 + 同一出身 + 同一难度 = 完全相同的人生。把种子分享给朋友,体验彼此的经历。</div>'+
   '<div class="help-block"><b>🛣️ 特殊路线</b><br>· 竞赛:天赋 65+ 且成绩 55+ 时,教练会邀请你走竞赛路线(高三前);接受后启用竞赛能力值。走竞赛后每学期会遇到竞赛外培课,晚自习也可刷竞赛题。高三一模公布省奖:省队降清北/C9 门槛、省一降 C9 门槛、省二降 985 门槛。竞赛生出身自带竞赛路线<br>· 留学 / 创业 / 继承家业:钱多好办事<br>· 网红:知名度够高时抓住流量机会</div>'+
