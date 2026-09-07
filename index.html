@@ -136,7 +136,9 @@ h1{font-size:29px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
 .tl-sem{font-size:12.5px;font-weight:700;color:#2f855a;margin:10px 0 4px}
 .tl-item{font-size:13px;color:#4a5568;line-height:1.7;padding:3px 0 3px 10px;border-left:2px solid #e2e8f0;margin-left:4px}
 .tl-foot{font-size:12px;color:#a0aec0;margin-top:10px}
-#trend-canvas{width:100%;height:auto;border-radius:10px}
+#trend-canvas{width:100%;height:auto;border-radius:10px;display:block}
+#trend-legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:10px;font-size:12px;color:#4a5568}
+#trend-legend .tl-chip{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 /* 全成就奖励:金色典藏配色(覆盖式主题,原样保留默认绿色规则) */
 body.theme-gold{background:linear-gradient(180deg,#fdf6e3 0%,#f3e9cf 100%)}
 body.theme-gold .btn.primary{background:#b7791f;box-shadow:0 3px 10px rgba(183,121,31,.35)}
@@ -201,9 +203,9 @@ body.theme-gold .tl-sem{color:#b7791f}
     <h1 style="font-size:23px">🚪 选择你的出身</h1>
     <p class="sub" id="origin-sub">出身决定起点,但决定不了终点</p>
     <div class="origin-grid" id="origin-grid"></div>
-    <label id="ngp-row" style="display:none;align-items:center;gap:8px;margin:12px 2px 0;font-size:13.5px;color:#4a5568">
+    <label id="ngp-row" style="display:none;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:12px 2px 0;font-size:13.5px;color:#4a5568;line-height:1.7">
       <input type="checkbox" id="chk-ngp"> 🎁 传承加成(全成就解锁):天赋 +3 · 金钱 +10 · 健康心态 +5
-      <span style="color:#a0aec0">(会改变种子结果,复现种子时请勿勾选)</span>
+      <span style="color:#a0aec0;width:100%;font-size:12px">(会改变种子结果,复现种子时请勿勾选)</span>
     </label>
     <button class="btn primary" id="btn-origin-ok" style="margin-top:14px" disabled>✅ 确认出身,开启高中生活</button>
   </div>
@@ -234,6 +236,7 @@ body.theme-gold .tl-sem{color:#b7791f}
     <div class="card">
       <div class="row-label">📈 三年数值曲线</div>
       <canvas id="trend-canvas"></canvas>
+      <div id="trend-legend"></div>
     </div>
     <div class="card">
       <div class="row-label">在总结卡片上留下你的名字</div>
@@ -1345,7 +1348,7 @@ function renderTrend(){
   cv.width = W*S; cv.height = H*S;
   var ctx = cv.getContext('2d');
   ctx.setTransform(S, 0, 0, S, 0, 0);
-  var L = 46, R = 12, T = 14, B = 32;
+  var L = 54, R = 14, T = 14, B = 30;
   var hx = G.history, n = hx.length;
   function X(i){ return L + (W-L-R) * (n===1 ? 0 : i/(n-1)); }
   function Y(v){ return T + (100-v)/100 * (H-T-B); }
@@ -1353,11 +1356,12 @@ function renderTrend(){
   [0,25,50,75,100].forEach(function(v){
     ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W-R, Y(v)); ctx.stroke();
-    ctx.fillStyle = '#a0aec0'; ctx.textAlign = 'right'; ctx.fillText(String(v), L-6, Y(v)+4);
+    ctx.fillStyle = '#a0aec0'; ctx.textAlign = 'right'; ctx.fillText(String(v), L-8, Y(v)+4);
   });
-  ctx.textAlign = 'center';
+  // x 轴标签(入学标签向左对齐,避免与 y 轴刻度挤在一起)
   hx.forEach(function(h, i){
     ctx.fillStyle = '#718096';
+    ctx.textAlign = (i===0) ? 'left' : (i===n-1 ? 'right' : 'center');
     ctx.fillText(h.sem===0 ? '入学' : SEM_NAMES[h.sem-1].replace('学期',''), X(i), H-8);
   });
   STAT_META.forEach(function(m){
@@ -1381,17 +1385,18 @@ function renderTrend(){
       ctx.beginPath(); ctx.arc(X(k), Y(v2), 2.5, 0, Math.PI*2); ctx.fill();
     }
   });
-  // 图例
-  var lx = L, ly = H-10;
-  ctx.textAlign = 'left';
-  STAT_META.forEach(function(m){
-    var has = false;
-    for(var i=0;i<n;i++) if(hx[i].stats[m.key] !== undefined){ has = true; break; }
-    if(!has) return;
-    var label = m.icon + m.name;
-    ctx.fillStyle = m.color; ctx.fillText(label, lx, ly);
-    lx += ctx.measureText(label).width + 12;
-  });
+  // 图例用 HTML 渲染(独立于画布,避免与 x 轴标签重叠)
+  var lg = document.getElementById('trend-legend');
+  if(lg){
+    var html = '';
+    STAT_META.forEach(function(m){
+      var has = false;
+      for(var i=0;i<n;i++) if(hx[i].stats[m.key] !== undefined){ has = true; break; }
+      if(!has) return;
+      html += '<span class="tl-chip" style="color:'+m.color+'">'+m.icon+' '+m.name+'</span>';
+    });
+    lg.innerHTML = html;
+  }
 }
 // 复制文本到剪贴板(带回退)
 function copyText(text, btn){

@@ -20,6 +20,7 @@ h1{font-size:26px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
 .filter-select:focus{border-color:#2f855a}
 .filter-progress{font-size:13px;color:#718096;margin:10px 0 4px;min-height:18px;line-height:1.5}
 .filter-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:13.5px;line-height:1.6}
+.filter-item > span:first-child{flex:1;min-width:0}
 .use-btn{background:#2f855a;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .preset-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .preset-chip{font-size:12.5px;background:#f0fff4;color:#276749;border:1.5px solid #c6f6d5;border-radius:20px;padding:4px 10px;cursor:pointer;font-family:inherit}
@@ -67,7 +68,7 @@ h1{font-size:26px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
     <div class="filter-progress" id="filter-progress">⬆️ 选好目标后点击「开始筛选」</div>
     <div id="filter-results"></div>
   </div>
-  <p class="footer-note">每个种子用多种「选牌策略」模拟,任一策略达成目标即收录;也可以固定策略,例如「仅总选第一项/最后一项」——全程只点对应选项即可复现<br>点「📋 复制复现码」,把整串粘贴回游戏主页的「生涯种子」,会自动按该种子的出身与难度开局;点「▶ 回放」看这个种子每一步的选择与数值变化<br>同种子 + 同出身 + 同难度 + 同样思路 = 结果可复现<br>生成于 <span id="build-time">2026/9/7 21:31:42</span><br><a href="index.html" style="color:#718096">← 返回游戏主页</a></p>
+  <p class="footer-note">每个种子用多种「选牌策略」模拟,任一策略达成目标即收录;也可以固定策略,例如「仅总选第一项/最后一项」——全程只点对应选项即可复现<br>点「📋 复制复现码」,把整串粘贴回游戏主页的「生涯种子」,会自动按该种子的出身与难度开局;点「▶ 回放」看这个种子每一步的选择与数值变化<br>同种子 + 同出身 + 同难度 + 同样思路 = 结果可复现<br>生成于 <span id="build-time">2026/9/8 00:06:56</span><br><a href="index.html" style="color:#718096">← 返回游戏主页</a></p>
   <!-- 种子回放弹层 -->
   <div id="replay-overlay">
     <div class="replay-card">
