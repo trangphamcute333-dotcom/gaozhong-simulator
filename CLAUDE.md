@@ -37,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 站点:https://trangphamcute333-dotcom.github.io/gaozhong-simulator/ ,远端 `origin` = github.com/trangphamcute333-dotcom/gaozhong-simulator,推 `main` 分支即上线(1-2 分钟生效)。
 - 推送命令:`git push origin main`;提交信息为一句中文特性总结。
-- **网络坑**:本机直连 GitHub 被墙。用户有 Clash(127.0.0.1:7890),但该节点可能无法连 github.com:443。推送失败时先测 `curl -sI -x http://127.0.0.1:7890 https://github.com`;通了再用 `git -c http.proxy=http://127.0.0.1:7890 push origin main`;不通则请用户换节点(浏览器验证 github.com 能打开为准)。系统代理开关状态:`reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings"`。
+- **网络与凭据(已配置好)**:本机直连 GitHub 被墙,靠 **Steam++(Watt Toolkit)** 加速器:hosts 把 github 域名指向 127.0.0.1,由其本地 443 端口反向代理。本仓库已配置 `http.sslBackend=openssl` + `http.sslCAInfo=C:/Users/LENOVO/steampp-ca.pem`(加速器根证书,从 TLS 握手链/Windows 证书库导出);凭据由 gh 提供(`gh auth setup-git` 已配置,账户 trangphamcute333-dotcom)。推送前可用 `git ls-remote origin` 验证连通。**Steam++ 未运行则 GitHub 全断**;若证书失效,重新导出链中根证书到该路径即可。注意:curl/schannel 的 TLS 指纹会被加速器拒绝,只有浏览器与 git(openssl 后端)可用。
 
 ## 代码风格
 
