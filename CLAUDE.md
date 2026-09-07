@@ -21,6 +21,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 彩蛋(在游戏主页种子输入框**输入即触发**,无需点按钮):`20070401` → 跳转 种子筛选器.html;`20070108` → 跳转 事件图鉴.html。实现在 index.html UI 层的 `trySeedEgg`。
 - 筛选器默认出身/难度随种子轮换:`ORIGINS[i % ORIGINS.length]` 与 `['hard','normal','fast'][i % 3]`(i 从 0 起,种子 = i+1)。
 
+## 全成就与主题(UI 层特性)
+
+- 存档用 localStorage(`store` 封装),键:`hs_sim.endings`(已解锁结局)、`hs_sim.records`(生涯档案)、`hs_sim.theme`(配色,green/gold)、`hs_sim.all_celebrated`(庆祝是否已弹过)。
+- 全成就庆祝:在 `saveEndingRecord` 里检测最后一个结局解锁后 0.9s 弹 `showCelebration`;启动时对「更新前就已全成就」的玩家补触发一次。庆祝弹层 + 彩带动画在 `#celebrate-overlay`。
+- 配色主题用**覆盖式 CSS**:不引入 CSS 变量,保留默认绿色规则,追加 `body.theme-gold` 开头的覆盖规则(金色 #b7791f/#fffbeb/#f6e05e)。新增主题或调色时,同步改三处:CSS 覆盖块、`drawCard` 里 canvas 的条件色(用 `isGoldTheme()`)、`doEnding` 的内联颜色。主页「🎨 配色」按钮仅全成就后显示。
+
 ## 数值平衡的改法
 
 - `ENDINGS` 按数组顺序取第一个满足者(优先级),改阈值会改变结局分布。
@@ -32,6 +38,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `node build-filter.js` 重建筛选器页。
 - 提取页面 `<script>` 内容后 `node --check` 做语法校验。
 - node 里 `eval(引擎块 + 测试代码)` 跑差分测试/达成率统计(注意引擎块开头有 `'use strict'`,eval 作用域内定义,测试代码要拼在同一个 eval 字符串里)。
+- UI 层函数冒烟测试:从 index.html 用正则提取目标函数文本,配最小 `document`/`localStorage` stub 后 eval(本会话用此法验证过 `trySeedEgg`、`applyTheme`、`allEndingsUnlocked`)。
 
 ## 部署(GitHub Pages)
 
