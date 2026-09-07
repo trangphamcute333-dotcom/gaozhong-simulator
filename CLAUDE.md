@@ -29,8 +29,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 结局页/分享/多周目(UI 层)
 
-- 结局页:三年数值曲线 `renderTrend`(数据源 `G.history`,引擎在 `createGame`/`runExam` 记录快照,**不消耗 RNG**,不影响确定性)+ 人生时间线 `renderTimeline`(数据源 `G.log`)。
-- URL 分享:`?seed=12@rich@fast` 启动时解析(带出身/难度直接开局,纯数字填入输入框,彩蛋号同样生效);结局页「分享链接」按钮复制该链接,实现在启动 IIFE 与 `btn-share` 处理器。
+- 结局页:三年数值曲线 `renderTrend`(数据源 `G.history`,引擎在 `createGame`/`runExam` 记录快照,**不消耗 RNG**,不影响确定性)+ 人生时间线 `renderTimeline`(数据源 `G.log`)。曲线图例渲染在 `#trend-legend` 的 HTML 里,**不要画进 canvas**(曾与 x 轴学期标签重叠)。
+- URL 分享:`?seed=12@rich@fast` 启动时解析(带出身/难度直接开局,纯数字填入输入框,彩蛋号同样生效);结局页「分享链接」按钮复制该链接,实现在启动 IIFE 与 `btn-share` 处理器。启动执行顺序:initHome → 主题应用 → 补庆祝 → URL 解析(可能直接 `startGame` 覆盖主页)。
 - 传承加成(New Game+):全成就后出身选择页出现勾选框(天赋+3/金钱+10/健康+5,默认关),`G.ngp` 标记并写入档案;**勾选会改变种子结果**,复现筛选器种子时勿勾选。
 - 筛选器结果有「▶ 回放」按钮:按该种子当时的策略复现整局,逐步展示选择/数值变化/考试/结局(实现在 filter.template.html 的 `replayCollect`/`startReplay`,改回放逻辑后要重建生成页)。
 
