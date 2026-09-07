@@ -3,233 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🎒 高中生涯模拟器</title>
+<title>🎲 种子筛选器 · 高中生涯模拟器</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{height:100%}
 body{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(180deg,#f7f4ea 0%,#eef3ec 100%);background-attachment:fixed;color:#2d3748;min-height:100vh;font-size:16px}
 #app{max-width:560px;margin:0 auto;padding:16px 16px 56px}
-.screen{display:none}
-.screen.active{display:block;animation:fadein .35s ease}
-@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:26px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
+.sub{text-align:center;color:#718096;font-size:13.5px;margin-bottom:16px}
 .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 14px rgba(45,55,72,.08);margin-bottom:14px}
-h1{font-size:29px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
-.sub{text-align:center;color:#718096;font-size:13.5px;margin-bottom:18px}
 .row-label{font-size:13px;color:#718096;font-weight:600;margin:4px 0 8px}
 .btn{display:block;width:100%;padding:13px;border:none;border-radius:12px;font-size:16px;cursor:pointer;font-weight:600;font-family:inherit}
 .btn.primary{background:#2f855a;color:#fff;box-shadow:0 3px 10px rgba(47,133,90,.3)}
 .btn.primary:active{background:#276749}
-.btn.ghost{background:#fff;color:#2f855a;border:1.5px solid #2f855a;width:auto;padding:10px 16px;font-size:14px;font-weight:600}
-.btn.ghost:active{background:#f0fff4}
-.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
-.diff-group{display:flex;gap:8px;margin-bottom:14px}
-.diff-btn{flex:1;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 6px;cursor:pointer;text-align:center;font-family:inherit;transition:all .15s}
-.diff-btn .dname{font-size:15px;font-weight:700}
-.diff-btn .ddesc{font-size:11px;color:#718096;margin-top:2px;line-height:1.4;white-space:pre-line}
-.diff-btn.sel{background:#f0fff4;border-color:#2f855a;color:#276749}
-.diff-btn.sel .ddesc{color:#4a5568}
-.seed-row{display:flex;gap:8px;margin-bottom:16px}
-.seed-row input{flex:1;padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:16px;font-family:inherit;background:#fff;outline:none}
-.seed-row input:focus{border-color:#2f855a}
-.seed-row button{background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:0 14px;font-size:18px;cursor:pointer}
-/* 出身选择 */
-.origin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:420px){.origin-grid{grid-template-columns:1fr}}
-.origin-card{background:#fff;border:2px solid #e2e8f0;border-radius:14px;padding:14px 12px;cursor:pointer;transition:all .15s;text-align:left;font-family:inherit;position:relative}
-.origin-card:active{transform:scale(.97)}
-.origin-card.sel{border-color:#2f855a;background:#f0fff4;box-shadow:0 3px 12px rgba(47,133,90,.25)}
-.origin-card .oicon{font-size:26px}
-.origin-card .oname{font-size:16px;font-weight:700;margin:4px 0 2px}
-.origin-card .otag{display:inline-block;font-size:11px;color:#dd6b20;background:#fffaf0;border:1px solid #feebc8;border-radius:20px;padding:1px 8px;margin-bottom:6px}
-.origin-card .odesc{font-size:12px;color:#718096;line-height:1.5}
-.origin-card .ostats{font-size:11px;color:#4a5568;margin-top:8px;line-height:1.7}
-/* 游戏主界面 */
-.game-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.sem-badge{background:#2f855a;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:600}
-.sem-badge small{font-weight:400;opacity:.85}
-.dots{display:flex;gap:5px}
-.dot{width:9px;height:9px;border-radius:50%;background:#cbd5e0}
-.dot.done{background:#2f855a}
-.dot.cur{background:#dd6b20;box-shadow:0 0 0 3px rgba(221,107,32,.25)}
-.school-line{text-align:center;color:#718096;font-size:12.5px;margin-bottom:12px}
-.stat-row{display:flex;align-items:center;gap:8px;padding:7px 0}
-.stat-icon{width:26px;text-align:center;font-size:16px}
-.stat-name{width:66px;font-size:13.5px;color:#4a5568;font-weight:600}
-.stat-bar{flex:1;height:10px;background:#edf2f7;border-radius:6px;overflow:hidden}
-.stat-fill{height:100%;border-radius:6px;transition:width .5s ease;min-width:0}
-.stat-val{width:36px;text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
-.stat-delta{position:absolute;opacity:0;font-size:12px;font-weight:700;pointer-events:none}
-@keyframes floatup{0%{opacity:0;transform:translateY(4px)}20%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
-.stat-row{position:relative}
-.delta-chip{position:absolute;right:40px;font-size:12px;font-weight:800;animation:floatup 1.5s ease forwards;pointer-events:none}
-.delta-chip.up{color:#276749}
-.delta-chip.down{color:#c53030}
-.flags-line{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.flag-chip{font-size:11.5px;background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:20px;padding:2px 9px}
-.event-card{padding:20px}
-.event-sem-tag{font-size:12px;color:#718096;margin-bottom:6px}
-.event-title{font-size:20px;font-weight:700;margin-bottom:10px;line-height:1.4}
-.event-desc{font-size:15px;color:#4a5568;line-height:1.75;margin-bottom:16px}
-.opt-btn{display:block;width:100%;text-align:left;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:15px;line-height:1.5;cursor:pointer;font-family:inherit;transition:all .12s;color:#2d3748}
-.opt-btn:last-child{margin-bottom:0}
-.opt-btn:active:not(:disabled){border-color:#2f855a;background:#f0fff4;transform:scale(.98)}
-.opt-btn:disabled{opacity:.5;border-style:dashed;cursor:not-allowed}
-.fx-line{font-size:12px;color:#718096;margin-top:5px}
-.fx-line b{font-weight:700}
-.need-line{font-size:12px;color:#e53e3e;margin-top:5px;font-weight:600}
-/* 考试/结局 */
-.exam-center{text-align:center;padding:26px 18px}
-.exam-emoji{font-size:44px}
-.exam-name{font-size:15px;color:#718096;margin:8px 0 2px}
-.exam-score{font-size:64px;font-weight:800;color:#2f855a;line-height:1.1;font-variant-numeric:tabular-nums}
-.exam-score small{font-size:22px;color:#718096;font-weight:600}
-.exam-rank{font-size:14px;color:#dd6b20;font-weight:600;margin-top:4px}
-.exam-notes{font-size:13.5px;color:#4a5568;line-height:1.8;margin-top:12px;text-align:left}
-.exam-notes li{margin-left:18px}
-.ending-icon{font-size:52px;text-align:center}
-.ending-name{font-size:26px;font-weight:800;text-align:center;margin:8px 0}
-.ending-desc{font-size:15px;color:#4a5568;text-align:center;line-height:1.8}
-.name-row{display:flex;gap:8px;margin-bottom:12px}
-.name-row input{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;outline:none;text-align:center}
-.name-row input:focus{border-color:#2f855a}
-.card-img{width:100%;border-radius:14px;box-shadow:0 4px 18px rgba(45,55,72,.18);display:block}
-.save-hint{text-align:center;font-size:12.5px;color:#718096;margin:8px 0 4px}
-/* 概率抽奖动画 */
-#roll-overlay{position:fixed;inset:0;background:rgba(26,32,44,.55);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
-#roll-overlay.show{display:flex}
-.roll-card{background:#fff;border-radius:20px;max-width:440px;width:100%;padding:22px 18px 16px;text-align:center;animation:fadein .25s ease;box-shadow:0 10px 40px rgba(0,0,0,.3)}
-.roll-title{font-size:21px;font-weight:800;margin-bottom:4px}
-.roll-sub{font-size:13px;color:#718096;margin-bottom:14px;line-height:1.5}
-.roll-window{font-size:19px;font-weight:700;color:#2d3748;background:#f7fafc;border:2px dashed #e2e8f0;border-radius:14px;padding:16px 12px;margin-bottom:14px;min-height:62px;display:flex;align-items:center;justify-content:center;transition:border-color .25s,background .25s,color .25s}
-.roll-window.pop{animation:rollpop .15s ease}
-@keyframes rollpop{0%{transform:scale(.93);opacity:.5}100%{transform:scale(1);opacity:1}}
-.roll-window.hit{border-style:solid;border-color:#2f855a;background:#f0fff4;color:#276749;animation:hitpulse .5s ease}
-@keyframes hitpulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
-.roll-list{text-align:left;margin-bottom:6px}
-.roll-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:10px;margin-bottom:6px;font-size:14px;color:#4a5568;background:#f7fafc;border:1.5px solid transparent;transition:all .12s}
-.roll-row.active{background:#f0fff4;border-color:#2f855a;color:#276749;font-weight:700}
-.roll-row.hit{background:#c6f6d5;border-color:#2f855a}
-.roll-row .rp{color:#a0aec0;font-size:12px;font-weight:600}
-.roll-result{font-size:15px;font-weight:700;color:#2f855a;min-height:24px;margin-top:8px}
-.roll-tip{font-size:11.5px;color:#a0aec0;margin-top:8px}
-/* 弹窗 */
-#modal-overlay{position:fixed;inset:0;background:rgba(26,32,44,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
-#modal-overlay.show{display:flex}
-.modal-card{background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:86vh;overflow-y:auto;padding:20px 18px;position:relative;animation:fadein .25s ease}
-.modal-close{position:sticky;top:0;float:right;background:none;border:none;font-size:24px;cursor:pointer;color:#718096;line-height:1;margin:-4px -6px 0 0}
-.modal-title{font-size:19px;font-weight:800;margin-bottom:12px}
-.end-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:420px){.end-grid{grid-template-columns:1fr}}
-.end-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px}
-.end-item.unlocked{background:#f0fff4;border-color:#c6f6d5}
-.end-item.locked{background:#f7fafc;opacity:.75}
-.end-item .ename{font-size:14.5px;font-weight:700}
-.end-item .eicon{font-size:22px;margin-right:4px}
-.end-item .ehint{font-size:11.5px;color:#718096;margin-top:4px;line-height:1.5}
-.rec-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 13px;margin-bottom:8px;font-size:13.5px;line-height:1.7}
-.rec-item b{font-size:14.5px}
-.help-block{font-size:14px;color:#4a5568;line-height:1.8;margin-bottom:12px}
-.help-block b{color:#2d3748}
-.small-link{font-size:12.5px;color:#718096;text-align:center;margin-top:14px}
-.footer-note{text-align:center;color:#a0aec0;font-size:12px;margin-top:26px}
+.btn.primary:disabled{opacity:.55;cursor:not-allowed}
+.filter-select{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:inherit;background:#fff;outline:none;margin-bottom:6px;color:#2d3748}
+.filter-select:focus{border-color:#2f855a}
+.filter-progress{font-size:13px;color:#718096;margin:10px 0 4px;min-height:18px;line-height:1.5}
+.filter-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:13.5px;line-height:1.6}
+.use-btn{background:#2f855a;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.preset-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.preset-chip{font-size:12.5px;background:#f0fff4;color:#276749;border:1.5px solid #c6f6d5;border-radius:20px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.footer-note{text-align:center;color:#a0aec0;font-size:12px;margin-top:26px;line-height:1.8}
 </style>
 </head>
 <body>
 <div id="app">
-
-  <!-- 主页 -->
-  <div id="screen-home" class="screen active">
-    <h1>🎒 高中生涯模拟器</h1>
-    <p class="sub">从踏入校门到高考落幕 · 六个学期 · 一段青春</p>
-    <div class="card">
-      <div class="row-label">选择难度</div>
-      <div class="diff-group" id="diff-group"></div>
-      <div class="row-label">生涯种子(同一种子 = 同一段人生)</div>
-      <div class="seed-row">
-        <input id="seed-input" maxlength="40" placeholder="留空则随机 · 可粘贴复现码(如 12@rich@fast)">
-        <button id="seed-dice" title="随机种子">🎲</button>
-      </div>
-      <button class="btn primary" id="btn-start">🎬 开始生涯</button>
-    </div>
-    <div class="btn-row">
-      <button class="btn ghost" id="btn-endings">📖 结局图鉴</button>
-      <button class="btn ghost" id="btn-records">🗂 生涯档案</button>
-      <button class="btn ghost" id="btn-help">❓ 玩法说明</button>
-    </div>
-    <p class="footer-note">纯前端小游戏 · 数据保存在本机浏览器</p>
+  <h1>🎲 种子筛选器</h1>
+  <p class="sub">高中生涯模拟器 · 按目标结局批量搜索种子</p>
+  <div class="card">
+    <div class="row-label">🎯 常用目标(点击直接搜索)</div>
+    <div class="preset-row" id="preset-row"></div>
+    <div class="row-label">目标结局</div>
+    <select class="filter-select" id="filter-ending"></select>
+    <div class="row-label">选牌策略(决定按什么思路玩)</div>
+    <select class="filter-select" id="filter-strategy"></select>
+    <div class="row-label">出身与难度(不选则由种子自动轮换)</div>
+    <select class="filter-select" id="filter-origin"></select>
+    <select class="filter-select" id="filter-diff"></select>
+    <div class="row-label">搜索种子数(从 1 开始递增)</div>
+    <select class="filter-select" id="filter-count">
+      <option value="1000">1000(快)</option>
+      <option value="5000" selected>5000(推荐)</option>
+      <option value="10000">10000(慢)</option>
+      <option value="20000">20000(很慢,适合稀有结局)</option>
+    </select>
+    <button class="btn primary" id="btn-filter-run" style="margin-top:14px">🔍 开始筛选</button>
   </div>
-
-  <!-- 出身选择 -->
-  <div id="screen-origin" class="screen">
-    <h1 style="font-size:23px">🚪 选择你的出身</h1>
-    <p class="sub" id="origin-sub">出身决定起点,但决定不了终点</p>
-    <div class="origin-grid" id="origin-grid"></div>
-    <button class="btn primary" id="btn-origin-ok" style="margin-top:14px" disabled>✅ 确认出身,开启高中生活</button>
+  <div class="card" id="result-card">
+    <div class="filter-progress" id="filter-progress">⬆️ 选好目标后点击「开始筛选」</div>
+    <div id="filter-results"></div>
   </div>
-
-  <!-- 游戏主界面 -->
-  <div id="screen-game" class="screen">
-    <div class="game-top">
-      <div class="sem-badge" id="sem-badge"></div>
-      <div class="dots" id="sem-dots"></div>
-    </div>
-    <div class="school-line" id="school-line"></div>
-    <div class="card" id="stats-panel"></div>
-    <div class="card event-card" id="event-panel"></div>
-  </div>
-
-  <!-- 考试结算 -->
-  <div id="screen-exam" class="screen">
-    <div class="card exam-center" id="exam-panel"></div>
-  </div>
-
-  <!-- 结局 -->
-  <div id="screen-ending" class="screen">
-    <div class="card">
-      <div class="ending-icon" id="ending-icon"></div>
-      <div class="ending-name" id="ending-name"></div>
-      <div class="ending-desc" id="ending-desc"></div>
-    </div>
-    <div class="card">
-      <div class="row-label">在总结卡片上留下你的名字</div>
-      <div class="name-row">
-        <input id="name-input" placeholder="输入名字,不填默认「生蚝蒸」" maxlength="10">
-      </div>
-      <img class="card-img" id="card-img" alt="生涯总结卡片">
-      <p class="save-hint">💾 长按上方图片 → 保存图片 / 分享给朋友</p>
-    </div>
-    <button class="btn primary" id="btn-again">🔄 同种子再来一局</button>
-    <div class="btn-row" style="margin-top:10px">
-      <button class="btn ghost" id="btn-rehome">🏠 回到主页</button>
-      <button class="btn ghost" id="btn-ending-compendium">📖 查看图鉴</button>
-    </div>
-  </div>
-
+  <p class="footer-note">每个种子用多种「选牌策略」模拟,任一策略达成目标即收录;也可以固定策略,例如「仅总选第一项/最后一项」——全程只点对应选项即可复现<br>点「📋 复制复现码」,把整串粘贴回游戏主页的「生涯种子」,会自动按该种子的出身与难度开局<br>同种子 + 同出身 + 同难度 + 同样思路 = 结果可复现<br>生成于 <span id="build-time">2026/9/7 17:17:25</span></p>
 </div>
-
-<!-- 概率抽奖动画 -->
-<div id="roll-overlay">
-  <div class="roll-card">
-    <div class="roll-title">🎰 命运的骰子</div>
-    <div class="roll-sub" id="roll-sub"></div>
-    <div class="roll-window" id="roll-window"></div>
-    <div class="roll-list" id="roll-list"></div>
-    <div class="roll-result" id="roll-result"></div>
-    <div class="roll-tip">点击可跳过</div>
-  </div>
-</div>
-
-<!-- 弹窗 -->
-<div id="modal-overlay">
-  <div class="modal-card">
-    <button class="modal-close" id="modal-close">✕</button>
-    <div class="modal-title" id="modal-title"></div>
-    <div id="modal-body"></div>
-  </div>
-</div>
-
 <script>
-/*__ENGINE_START__*/
 'use strict';
 // ============ 基础定义(纯数据/纯函数,不依赖 DOM,可供 node 提取测试) ============
 var STAT_KEYS = ['talent','grades','contest','money','relation','fame','health'];
@@ -1199,535 +1025,133 @@ var PICK_STRATEGIES = [
   {id:'first',      name:'总选第一项',    fn:pickFirst},
   {id:'last',       name:'总选最后一项',  fn:pickLast},
 ];
-/*__ENGINE_END__*/
-
-// ============ UI 层 ============
-var G = null;            // 当前游戏
-var pendingEvents = [];  // 本学期待处理事件
-var chosenDiff = 'normal';
-var chosenSeed = null;
-var selOrigin = null;
-var cardCanvas = document.createElement('canvas');
-var FONT = '"PingFang SC","Microsoft YaHei",system-ui,sans-serif';
-
-var store = {
-  get: function(k, d){ try{ var v = localStorage.getItem(k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } },
-  set: function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
-};
-
-function $(sel){ return document.querySelector(sel); }
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
-}
-function statMeta(key){ for(var i=0;i<STAT_META.length;i++) if(STAT_META[i].key===key) return STAT_META[i]; return {icon:'?',name:key}; }
-function endingById(id){ for(var i=0;i<ENDINGS.length;i++) if(ENDINGS[i].id===id) return ENDINGS[i]; return {icon:'❓',name:id,desc:''}; }
+// ============ 筛选器 UI(独立页面) ============
+function byId(id){ return document.getElementById(id); }
+function endingById(id){ for(var i=0;i<ENDINGS.length;i++) if(ENDINGS[i].id===id) return ENDINGS[i]; return {icon:'❓',name:id}; }
 function originById(id){ for(var i=0;i<ORIGINS.length;i++) if(ORIGINS[i].id===id) return ORIGINS[i]; return {icon:'❓',name:id}; }
-function originIdValid(id){ for(var i=0;i<ORIGINS.length;i++) if(ORIGINS[i].id===id) return true; return false; }
-function setDiffUI(d){
-  chosenDiff = d;
-  var dg = document.getElementById('diff-group');
-  if(dg) dg.querySelectorAll('.diff-btn').forEach(function(b){ b.classList.toggle('sel', b.dataset.d===d); });
-}
+var runTimer = null;
 
-// ---------- 主页 ----------
-function initHome(){
-  var dg = document.getElementById('diff-group');
-  var html = '';
-  for(var k in DIFF){
-    var d = DIFF[k];
-    html += '<button class="diff-btn'+(k===chosenDiff?' sel':'')+'" data-d="'+k+'">'+
-      '<div class="dname">'+d.icon+' '+d.name+'</div>'+
-      '<div class="ddesc">'+d.desc+'</div></button>';
-  }
-  dg.innerHTML = html;
-  dg.querySelectorAll('.diff-btn').forEach(function(b){
-    b.addEventListener('click', function(){ setDiffUI(b.dataset.d); });
+function init(){
+  var endOpts = '';
+  ENDINGS.forEach(function(e){ endOpts += '<option value="'+e.id+'">'+e.icon+' '+e.name+'</option>'; });
+  byId('filter-ending').innerHTML = endOpts;
+  var originOpts = '<option value="">全部出身</option>';
+  ORIGINS.forEach(function(o){ originOpts += '<option value="'+o.id+'">'+o.icon+' '+o.name+'</option>'; });
+  byId('filter-origin').innerHTML = originOpts;
+  var diffOpts = '<option value="">全部难度</option>';
+  for(var k in DIFF){ diffOpts += '<option value="'+k+'">'+DIFF[k].icon+' '+DIFF[k].name+'</option>'; }
+  byId('filter-diff').innerHTML = diffOpts;
+  var stratOpts = '<option value="">全部策略(任一达成即收录)</option>'+
+    '<option value="last">仅总选最后一项 ⭐ 最易复现</option>';
+  PICK_STRATEGIES.forEach(function(s){
+    if(s.id === 'last') return;
+    stratOpts += '<option value="'+s.id+'">仅'+s.name+(s.id==='first' ? ' ⭐ 最易复现' : '')+'</option>';
   });
-  document.getElementById('seed-dice').addEventListener('click', function(){
-    document.getElementById('seed-input').value = String(1 + Math.floor(Math.random()*999999));
+  byId('filter-strategy').innerHTML = stratOpts;
+  var presets = [
+    {id:'baosong'}, {id:'zhuangyuan'}, {id:'love'}, {id:'yiyu_dead'}, {id:'abroad_money'},
+  ];
+  var phtml = '';
+  presets.forEach(function(p){
+    var e = endingById(p.id);
+    phtml += '<button class="preset-chip" data-id="'+p.id+'">'+e.icon+' '+e.name+'</button>';
   });
-  document.getElementById('btn-start').addEventListener('click', function(){
-    var v = document.getElementById('seed-input').value.trim();
-    // 种子筛选器复现码:种子@出身@难度(例如 12@rich@fast),按此配置直接开局,保证结果可复现
-    var m = v.match(/^(\d{1,9})@([a-z_]+)@([a-z_]+)$/);
-    if(m && originIdValid(m[2]) && DIFF[m[3]]){
-      chosenSeed = parseInt(m[1],10)>>>0 || 1;
-      selOrigin = m[2];
-      setDiffUI(m[3]);
-      startGame();
-      return;
-    }
-    if(v.indexOf('@') >= 0){
-      alert('复现码格式不对:应为「种子@出身@难度」,例如 12@rich@fast');
-      return;
-    }
-    if(v && /^\d+$/.test(v)){ chosenSeed = parseInt(v,10)>>>0 || 1; }
-    else {
-      chosenSeed = 1 + Math.floor(Math.random()*999999);
-      document.getElementById('seed-input').value = String(chosenSeed);
-    }
-    renderOrigins();
-    showScreen('screen-origin');
-  });
-  document.getElementById('btn-endings').addEventListener('click', openEndingsModal);
-  document.getElementById('btn-records').addEventListener('click', openRecordsModal);
-  document.getElementById('btn-help').addEventListener('click', openHelpModal);
-}
-
-// ---------- 出身选择 ----------
-function renderOrigins(){
-  selOrigin = null;
-  var ok = document.getElementById('btn-origin-ok');
-  ok.disabled = true;
-  var grid = document.getElementById('origin-grid');
-  var html = '';
-  ORIGINS.forEach(function(o){
-    html += '<button class="origin-card" data-id="'+o.id+'">'+
-      '<div class="oicon">'+o.icon+'</div>'+
-      '<div class="oname">'+o.name+'</div>'+
-      '<span class="otag">'+o.tag+'</span>'+
-      '<div class="odesc">'+o.desc+'</div>'+
-      '<div class="ostats">初始 📖'+o.grades+' 💰'+o.money+' 🤝'+o.relation+' ⭐'+o.fame+' ❤️'+o.health+
-      '<br>天赋 🧬'+o.talent[0]+'~'+o.talent[1]+'(按种子浮动)</div>'+
-      '</button>';
-  });
-  grid.innerHTML = html;
-  grid.querySelectorAll('.origin-card').forEach(function(b){
+  byId('preset-row').innerHTML = phtml;
+  byId('preset-row').querySelectorAll('.preset-chip').forEach(function(b){
     b.addEventListener('click', function(){
-      selOrigin = b.dataset.id;
-      grid.querySelectorAll('.origin-card').forEach(function(x){ x.classList.toggle('sel', x===b); });
-      ok.disabled = false;
+      byId('filter-ending').value = b.dataset.id;
+      runFilter();
     });
   });
-  $('#origin-sub').innerHTML = '种子 <b>'+chosenSeed+'</b> · <b>'+DIFF[chosenDiff].name+'</b>难度 ｜ 出身决定起点,但决定不了终点';
+  byId('btn-filter-run').addEventListener('click', runFilter);
 }
-function startGame(){
-  G = createGame(chosenSeed, chosenDiff, selOrigin);
-  semesterStart(G);
-  G.log.push({sem:0, title:'入学', text:'你踏入了 '+G.school+' 的校门'});
-  updateHud();
-  renderStats();
-  pendingEvents = drawEvents(G);
-  showEvent(0);
-  showScreen('screen-game');
-}
-document.getElementById('btn-origin-ok').addEventListener('click', startGame);
 
-// ---------- 游戏主界面 ----------
-function updateHud(){
-  $('#sem-badge').innerHTML = SEM_NAMES[G.sem-1] + ' <small>'+G.sem+'/6</small>';
-  $('#school-line').textContent = '🏫 ' + G.school;
-  var dots = '';
-  for(var i=1;i<=6;i++){
-    var cls = i<G.sem ? 'done' : (i===G.sem ? 'cur' : '');
-    dots += '<span class="dot '+cls+'"></span>';
-  }
-  $('#sem-dots').innerHTML = dots;
-}
-function renderStats(deltas){
-  var html = '';
-  for(var i=0;i<STAT_META.length;i++){
-    var m = STAT_META[i];
-    if(m.key==='contest' && G.stats.contest===undefined) continue;
-    var v = G.stats[m.key];
-    var chip = '';
-    if(deltas && deltas[m.key] && deltas[m.key]!==0){
-      var d = deltas[m.key];
-      chip = '<span class="delta-chip '+(d>0?'up':'down')+'">'+(d>0?'+':'')+d+'</span>';
-    }
-    html += '<div class="stat-row">'+
-      '<span class="stat-icon">'+m.icon+'</span>'+
-      '<span class="stat-name">'+m.name+'</span>'+
-      '<div class="stat-bar"><div class="stat-fill" style="width:'+v+'%;background:'+m.color+'"></div></div>'+
-      '<span class="stat-val">'+v+'</span>'+chip+
-      '</div>';
-  }
-  var fl = Object.keys(G.flags);
-  if(fl.length){
-    html += '<div class="flags-line">';
-    fl.forEach(function(f){ if(FLAG_META[f]) html += '<span class="flag-chip">'+FLAG_META[f]+'</span>'; });
-    html += '</div>';
-  }
-  $('#stats-panel').innerHTML = html;
-}
-function showEvent(idx){
-  if(idx >= pendingEvents.length){ renderExam(); return; }
-  var ev = pendingEvents[idx];
-  var opts = eligibleOpts(G, ev);
-  var showFx = DIFF[G.diff].showFx;
-  var html = '';
-  for(var i=0;i<ev.opts.length;i++){
-    var o = ev.opts[i];
-    var ok = opts.indexOf(o) >= 0;
-    var fxLine = '';
-    if(showFx && o.fx){
-      var parts = [];
-      for(var k in o.fx){
-        var v = o.fx[k];
-        parts.push(statMeta(k).icon+' '+(v>0?'+':'')+v);
-      }
-      fxLine += '<div class="fx-line">'+parts.join(' · ')+'</div>';
-    }
-    if(showFx && o.flag){
-      var fl2 = o.flag.map(function(f){ return FLAG_META[f]||f; }).join(' ');
-      fxLine += '<div class="fx-line">获得状态:'+fl2+'</div>';
-    }
-    if(showFx && o.initContest) fxLine += '<div class="fx-line">启用竞赛能力值 🏆</div>';
-    if(showFx && o.roll){
-      var rl = o.roll.map(function(r){ return Math.round(r.p*100)+'% '+(r.say||''); }).join(' · ');
-      fxLine += '<div class="fx-line">概率:'+rl+'</div>';
-    }
-    var needLine = '';
-    if(!ok && o.need){
-      var nl = [];
-      for(var k2 in o.need){
-        if(k2==='flag'){ nl.push('状态「'+ (FLAG_META[o.need.flag]||o.need.flag) +'」'); }
-        else nl.push(statMeta(k2).icon+'≥'+o.need[k2]);
-      }
-      needLine = '<div class="need-line">需要 '+nl.join(' · ')+'</div>';
-    }
-    html += '<button class="opt-btn" data-i="'+i+'"'+(ok?'':' disabled')+'>'+o.text+fxLine+needLine+'</button>';
-  }
-  $('#event-panel').innerHTML =
-    '<div class="event-sem-tag">'+SEM_NAMES[G.sem-1]+' · 事件 '+(idx+1)+' / '+pendingEvents.length+'</div>'+
-    '<div class="event-title">'+ev.icon+' '+ev.title+'</div>'+
-    '<div class="event-desc">'+ev.desc+'</div>'+html;
-  $('#event-panel').querySelectorAll('.opt-btn').forEach(function(b){
-    b.addEventListener('click', function(){
-      var o = ev.opts[+b.dataset.i];
-      var res = applyOption(G, ev, o);
-      // 立即禁用全部选项,防止延迟窗口内重复点击导致重复生效
-      var btns = document.querySelectorAll('#event-panel .opt-btn');
-      for(var bi=0;bi<btns.length;bi++) btns[bi].disabled = true;
-      function proceed(){
-        var fe = forcedEnding(G);
-        if(fe){ renderStats(res.deltas); doEarlyEnding(endingById(fe)); return; }
-        renderStats(res.deltas);
-        if(idx+1 >= pendingEvents.length){
-          // 学期最后一个选项:留出时间让数值变化动画播完,再进入考试
-          setTimeout(function(){ showEvent(idx+1); }, 900);
-        } else {
-          showEvent(idx+1);
+function runFilter(){
+  if(runTimer){ clearTimeout(runTimer); runTimer = null; }
+  var target = byId('filter-ending').value;
+  var origin = byId('filter-origin').value;
+  var diff = byId('filter-diff').value;
+  var stratId = byId('filter-strategy').value;
+  var total = parseInt(byId('filter-count').value, 10) || 5000;
+  var prog = byId('filter-progress');
+  var resBox = byId('filter-results');
+  var runBtn = byId('btn-filter-run');
+  runBtn.disabled = true;
+  resBox.innerHTML = '';
+  var strats = stratId ? PICK_STRATEGIES.filter(function(s){ return s.id === stratId; }) : PICK_STRATEGIES;
+  var found = [];
+  var i = 0;
+  var t0 = Date.now();
+  var CHUNK = 150;
+  function step(){
+    var end = Math.min(i + CHUNK, total);
+    for(; i < end; i++){
+      var seed = i + 1;
+      var gOrigin = origin || ORIGINS[i % ORIGINS.length].id;
+      var gDiff = diff || ['hard','normal','fast'][i % 3];
+      for(var s=0; s<strats.length; s++){
+        var st = strats[s];
+        var g = createGame(seed, gDiff, gOrigin);
+        var res = simGame(g, st.fn);
+        if(res.ending === target){
+          found.push({seed:seed, origin:gOrigin, diff:gDiff, score:res.score, strategy:st.name, strategyId:st.id});
+          break;
         }
       }
-      if(res.roll){ playRollAnimation(ev, o, res, proceed); }
-      else { proceed(); }
-    });
-  });
-}
-
-// ---------- 概率抽奖动画(结果已由种子决定,这里只是揭晓过程) ----------
-function playRollAnimation(ev, opt, res, done){
-  var overlay = document.getElementById('roll-overlay');
-  var hard = !DIFF[G.diff].showFx;
-  var branches = opt.roll;
-  var hitIdx = res.roll.idx;
-  var listHtml = '';
-  for(var i=0;i<branches.length;i++){
-    listHtml += '<div class="roll-row" data-i="'+i+'"><span>'+branches[i].say+'</span>'+
-      (hard ? '' : '<span class="rp">'+Math.round(branches[i].p*100)+'%</span>')+'</div>';
-  }
-  document.getElementById('roll-list').innerHTML = listHtml;
-  document.getElementById('roll-sub').textContent = ev.icon+' '+ev.title+' · 你选择了:「'+opt.text+'」';
-  var win = document.getElementById('roll-window');
-  win.className = 'roll-window';
-  document.getElementById('roll-result').innerHTML = '';
-  overlay.classList.add('show');
-  var rows = overlay.querySelectorAll('.roll-row');
-  var closed = false, finished = false;
-  function finish(){
-    if(closed) return;
-    closed = true;
-    overlay.classList.remove('show');
-    done();
-  }
-  function land(){
-    if(finished) return;
-    finished = true;
-    win.classList.add('hit');
-    win.textContent = '🎯 ' + branches[hitIdx].say;
-    rows.forEach(function(r){ r.classList.toggle('active', false); r.classList.toggle('hit', +r.dataset.i === hitIdx); });
-    var fxLine = '';
-    var hf = branches[hitIdx].fx;
-    if(hf){
-      var parts = [];
-      for(var k in hf){
-        var v = hf[k];
-        parts.push(statMeta(k).icon+' '+(v>0?'+':'')+v);
-      }
-      fxLine = ' <span style="font-weight:600">('+parts.join(' · ')+')</span>';
     }
-    document.getElementById('roll-result').innerHTML = '—— 中了!——'+fxLine;
-  }
-  function tick(){
-    if(finished) return;
-    var steps = branches.length*2 + hitIdx + 1; // 至少转两圈再停
-    var step = 0;
-    (function spin(){
-      if(finished || closed) return;
-      if(step < steps){
-        var cur = step % branches.length;
-        win.textContent = branches[cur].say;
-        win.classList.remove('pop'); void win.offsetWidth; win.classList.add('pop');
-        rows.forEach(function(r){ r.classList.toggle('active', +r.dataset.i === cur); });
-        step++;
-        setTimeout(spin, 60 + step*step*9);
+    prog.textContent = '🔍 已搜索 '+i+' / '+total+' 个种子 · 找到 '+found.length+' 个';
+    if(i < total){
+      runTimer = setTimeout(step, 0);
+    } else {
+      runBtn.disabled = false;
+      prog.textContent = '✅ 搜索完成:'+total+' 个种子 · 找到 '+found.length+' 个 · 耗时 '+Math.round((Date.now()-t0)/100)/10+' 秒';
+      if(found.length === 0){
+        resBox.innerHTML = '<div class="filter-progress" style="color:#c53030">没有找到符合条件的种子,试试增大搜索量或放宽出身/难度</div>';
       } else {
-        land();
-        setTimeout(finish, 1200);
+        var e = endingById(target);
+        var html = '';
+        found.slice(0, 50).forEach(function(f){
+          // 只有总选第一项/最后一项是人类能照着复现的;贪心/随机是脚本策略,仅作参考
+          var replayable = (f.strategyId === 'first' || f.strategyId === 'last');
+          html += '<div class="filter-item"><span><b>🎲 种子 '+f.seed+'</b> · '+originById(f.origin).icon+originById(f.origin).name+' · '+DIFF[f.diff].name+'<br>'+
+            e.icon+' '+e.name+(f.score===null?' · 未能参加高考':' · 高考 '+f.score+' 分')+' · 策略:'+f.strategy+
+            (replayable ? '' : ' ⚠️ 脚本策略,手动复现难')+'</span>'+
+            '<button class="use-btn" data-spec="'+f.seed+'@'+f.origin+'@'+f.diff+'">📋 复制复现码</button></div>';
+        });
+        if(found.length > 50) html += '<div class="filter-progress">仅显示前 50 个</div>';
+        resBox.innerHTML = html;
+        resBox.querySelectorAll('.use-btn').forEach(function(b){
+          b.addEventListener('click', function(){ copySpec(b.dataset.spec, b); });
+        });
       }
-    })();
-  }
-  tick();
-  overlay.onclick = function(){
-    if(finished){ finish(); }
-    else { land(); setTimeout(finish, 800); }
-  };
-}
-
-// ---------- 考试 ----------
-function renderExam(){
-  var r = runExam(G);
-  var fe = forcedEnding(G);
-  if(fe){ doEarlyEnding(endingById(fe)); return; }
-  var emoji = r.isGaokao ? '🎓' : (G.sem===5 ? '📊' : (G.sem===4 ? '📜' : '📝'));
-  var items = [];
-  if(r.delta>0) items.push('发挥出色,成绩 <b>+'+r.delta+'</b>');
-  else if(r.delta<0) items.push('发挥不佳,成绩 <b>'+r.delta+'</b>');
-  else items.push('发挥平稳,成绩不变');
-  if(r.bonuses.length) items.push('隐藏加成:'+r.bonuses.join('、'));
-  r.notes.forEach(function(n){ items.push(n); });
-  var notes = '';
-  items.forEach(function(n){ notes += '<li>'+n+'</li>'; });
-  $('#exam-panel').innerHTML =
-    '<div class="exam-emoji">'+emoji+'</div>'+
-    '<div class="exam-name">'+SEM_NAMES[G.sem-1]+' · '+SEM_EXAMS[G.sem-1]+'</div>'+
-    '<div class="exam-score">'+r.score+'<small> 分</small></div>'+
-    '<div class="exam-rank">'+rankText(r.score, r.isGaokao)+'</div>'+
-    '<ul class="exam-notes">'+notes+'</ul>'+
-    '<button class="btn primary" id="btn-exam-next" style="margin-top:14px">'+(r.isGaokao?'查看结局 →':'进入下一学期 →')+'</button>';
-  $('#btn-exam-next').addEventListener('click', function(){
-    if(r.isGaokao){ renderStats(); doEnding(r); }
-    else {
-      semesterStart(G);
-      var fe2 = forcedEnding(G);
-      if(fe2){ updateHud(); renderStats(); doEarlyEnding(endingById(fe2)); return; }
-      updateHud();
-      renderStats();
-      pendingEvents = drawEvents(G);
-      showEvent(0);
-      showScreen('screen-game');
     }
-  });
-  showScreen('screen-exam');
-}
-
-// ---------- 结局 ----------
-function saveEndingRecord(ending, score){
-  var endings = store.get('hs_sim.endings', {});
-  endings[ending.id] = true;
-  store.set('hs_sim.endings', endings);
-  var records = store.get('hs_sim.records', []);
-  records.unshift({seed:G.seed, diff:G.diff, origin:G.origin, ending:ending.id, score:score, t:Date.now()});
-  if(records.length>30) records.length = 30;
-  store.set('hs_sim.records', records);
-}
-function doEnding(r){
-  var ending = determineEnding(G, r.score);
-  G.ending = ending;
-  saveEndingRecord(ending, r.score);
-  $('#ending-icon').textContent = ending.icon;
-  $('#ending-name').textContent = ending.name;
-  $('#ending-desc').innerHTML = '<b style="color:#2f855a">🎓 高考总分 '+r.score+' 分</b> · '+rankText(r.score,true)+'<br><br>'+ending.desc;
-  $('#name-input').value = '';
-  drawCard('');
-  showScreen('screen-ending');
-}
-// 抑郁未治疗、心态崩溃:强制提前结束(主角自杀了)
-function doEarlyEnding(ending){
-  G.ending = ending;
-  G.earlyEnd = true;
-  G.log.push({sem:G.sem, title:'那根断掉的弦', text:'TA 没有等到高考,故事在这里戛然而止'});
-  saveEndingRecord(ending, null);
-  $('#ending-icon').textContent = ending.icon;
-  $('#ending-name').textContent = ending.name;
-  $('#ending-desc').innerHTML = '<b style="color:#c53030">'+SEM_NAMES[G.sem-1]+' · 未能参加高考</b><br><br>'+ending.desc;
-  $('#name-input').value = '';
-  drawCard('');
-  showScreen('screen-ending');
-}
-$('#btn-again').addEventListener('click', function(){ renderOrigins(); showScreen('screen-origin'); });
-$('#btn-rehome').addEventListener('click', function(){ showScreen('screen-home'); });
-$('#btn-ending-compendium').addEventListener('click', openEndingsModal);
-$('#name-input').addEventListener('input', function(){ drawCard(this.value.trim()); });
-
-// ---------- 总结卡片(Canvas) ----------
-function fitText(ctx, text, maxW){
-  if(ctx.measureText(text).width <= maxW) return text;
-  while(text.length>1 && ctx.measureText(text+'…').width > maxW) text = text.slice(0,-1);
-  return text+'…';
-}
-function rr(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y, x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x, y+h, r);
-  ctx.arcTo(x, y+h, x, y, r);
-  ctx.arcTo(x, y, x+w, y, r);
-  ctx.closePath();
-}
-function drawCard(name){
-  var W = 720, H = 1200, S = 2;
-  var cv = cardCanvas;
-  cv.width = W*S; cv.height = H*S;
-  var ctx = cv.getContext('2d');
-  ctx.setTransform(S, 0, 0, S, 0, 0);
-  var last = G.earlyEnd ? null : (G.scores.length ? G.scores[G.scores.length-1] : null);
-  var ending = G.ending || determineEnding(G, last ? last.score : 0);
-  var rank = last ? rankText(last.score, true) : '';
-  // 背景
-  var bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, '#fffdf4'); bg.addColorStop(1, '#e7f2ea');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(47,133,90,.05)'; ctx.beginPath(); ctx.arc(W, 0, 280, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = 'rgba(221,107,32,.04)'; ctx.beginPath(); ctx.arc(0, H, 320, 0, Math.PI*2); ctx.fill();
-  // 顶部横幅
-  ctx.fillStyle = '#2f855a'; ctx.fillRect(0, 0, W, 140);
-  ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(0, 100, W, 40);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 42px '+FONT;
-  ctx.fillText('🎒 高中生涯总结', W/2, 80);
-  ctx.font = '24px '+FONT; ctx.fillStyle = 'rgba(255,255,255,.9)';
-  ctx.fillText(G.school, W/2, 124);
-  // 姓名
-  ctx.fillStyle = '#2d3748'; ctx.font = 'bold 40px '+FONT;
-  ctx.fillText(fitText(ctx, name || '生蚝蒸', W-160), W/2, 206);
-  // 元信息
-  ctx.font = '22px '+FONT; ctx.fillStyle = '#718096';
-  ctx.fillText(G.originObj.name+' · '+DIFF[G.diff].name+'难度 · 种子 '+G.seed, W/2, 248);
-  // 结局徽章
-  var label = ending.icon+' '+ending.name;
-  ctx.font = 'bold 28px '+FONT;
-  var tw = ctx.measureText(label).width;
-  var bw = tw + 56, bx = (W-bw)/2, by = 278, bh = 54;
-  ctx.fillStyle = '#fff7db'; ctx.strokeStyle = '#dd6b20'; ctx.lineWidth = 2;
-  rr(ctx, bx, by, bw, bh, 27); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#9c4221'; ctx.textBaseline = 'middle';
-  ctx.fillText(label, W/2, by+bh/2+2);
-  ctx.textBaseline = 'alphabetic';
-  // 高考分数
-  ctx.fillStyle = '#4a5568'; ctx.font = '24px '+FONT;
-  ctx.fillText(last ? '高考总分' : '未能参加高考', W/2, 414);
-  ctx.fillStyle = '#2f855a'; ctx.font = 'bold 96px '+FONT;
-  var sc = last ? String(last.score) : '—';
-  ctx.fillText(sc, W/2 - 26, 508);
-  if(last){
-    ctx.font = '28px '+FONT; ctx.fillStyle = '#718096';
-    ctx.fillText('分', W/2 + ctx.measureText(sc).width/2 + 18, 500);
   }
-  ctx.font = '24px '+FONT; ctx.fillStyle = '#dd6b20';
-  if(last) ctx.fillText(rank, W/2, 556);
-  // 分隔线
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(80, 596); ctx.lineTo(W-80, 596); ctx.stroke();
-  // 数值
-  ctx.textAlign = 'left';
-  ctx.font = 'bold 26px '+FONT; ctx.fillStyle = '#2d3748';
-  ctx.fillText('高中三年的你', 80, 646);
-  var metaList = STAT_META.filter(function(m){ return m.key!=='contest' || G.stats.contest !== undefined; });
-  for(var i=0;i<metaList.length;i++){
-    var m = metaList[i];
-    var v = G.stats[m.key];
-    var y = 668 + i*48;
-    ctx.font = '22px '+FONT; ctx.fillStyle = '#4a5568';
-    ctx.fillText(m.icon+' '+m.name, 80, y+8);
-    ctx.fillStyle = '#e2e8f0';
-    rr(ctx, 250, y-12, 340, 16, 8); ctx.fill();
-    ctx.fillStyle = m.color;
-    rr(ctx, 250, y-12, Math.max(8, 340*v/100), 16, 8); ctx.fill();
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 24px '+FONT; ctx.fillStyle = '#2d3748';
-    ctx.fillText(String(v), W-80, y+9);
-    ctx.textAlign = 'left';
+  step();
+}
+
+// 复制复现码(种子@出身@难度),游戏主页的「生涯种子」可直接粘贴整串,自动按此出身与难度开局
+function copySpec(spec, btn){
+  function fallbackCopy(){
+    var ta = document.createElement('textarea');
+    ta.value = spec;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+    done(ok);
   }
-  // 关键回忆
-  ctx.font = 'bold 26px '+FONT; ctx.fillStyle = '#2d3748';
-  ctx.fillText('关键回忆', 80, 1042);
-  var entries = [];
-  if(G.log.length > 4) entries.push({line:'…… 共经历 '+G.log.length+' 次选择'});
-  var tail = G.log.slice(-2);
-  tail.forEach(function(e){
-    var semName = e.sem===0 ? '入学' : SEM_NAMES[e.sem-1];
-    entries.push({line: semName+' · '+e.title+' — '+e.text});
-  });
-  ctx.font = '20px '+FONT; ctx.fillStyle = '#4a5568';
-  for(var j=0;j<entries.length;j++){
-    ctx.fillText(fitText(ctx, entries[j].line, W-160), 80, 1090 + j*44);
+  function done(ok){
+    btn.textContent = ok ? '✅ 已复制' : '复制失败,长按复制:'+spec;
+    setTimeout(function(){ btn.textContent = '📋 复制复现码'; }, 1600);
   }
-  // 页脚
-  ctx.textAlign = 'center';
-  ctx.font = '20px '+FONT; ctx.fillStyle = '#a0aec0';
-  ctx.fillText('高中生涯模拟器 · 愿你前程似锦', W/2, 1186);
-  $('#card-img').src = cv.toDataURL('image/png');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(spec).then(function(){ done(true); }, fallbackCopy);
+  } else { fallbackCopy(); }
 }
 
-// ---------- 弹窗 ----------
-function openModal(title, html){
-  $('#modal-title').textContent = title;
-  $('#modal-body').innerHTML = html;
-  $('#modal-overlay').classList.add('show');
-}
-function closeModal(){ $('#modal-overlay').classList.remove('show'); }
-$('#modal-close').addEventListener('click', closeModal);
-$('#modal-overlay').addEventListener('click', function(e){ if(e.target === this) closeModal(); });
-
-function openEndingsModal(){
-  var endings = store.get('hs_sim.endings', {});
-  var n = 0, html = '';
-  ENDINGS.forEach(function(e){
-    var un = !!endings[e.id];
-    if(un) n++;
-    html += '<div class="end-item '+(un?'unlocked':'locked')+'">'+
-      '<div class="ename"><span class="eicon">'+(un?e.icon:'❓')+'</span>'+(un?e.name:'???')+'</div>'+
-      '<div class="ehint">'+(un?e.desc:e.hint)+'</div></div>';
-  });
-  openModal('📖 结局图鉴', '<div style="font-size:13px;color:#718096;margin-bottom:10px">已解锁 '+n+' / '+ENDINGS.length+' 个结局</div><div class="end-grid">'+html+'</div>');
-}
-function openRecordsModal(){
-  var records = store.get('hs_sim.records', []);
-  var html = '';
-  if(!records.length) html = '<div style="color:#718096;text-align:center;padding:18px 0">还没有档案,快去开启你的第一段人生吧</div>';
-  records.forEach(function(r){
-    var e = endingById(r.ending), o = originById(r.origin);
-    html += '<div class="rec-item"><b>'+e.icon+' '+e.name+'</b> · '+(r.score===null?'未能参加高考':r.score+' 分')+'<br>'+
-      '出身:'+o.icon+' '+o.name+' · '+DIFF[r.diff].name+' · 种子 '+r.seed+' · '+new Date(r.t).toLocaleDateString('zh-CN')+'</div>';
-  });
-  if(records.length) html += '<button class="btn ghost" id="btn-clear-records" style="width:100%;color:#c53030;border-color:#c53030">🗑 清空档案</button>';
-  openModal('🗂 生涯档案', html);
-  var btn = document.getElementById('btn-clear-records');
-  if(btn) btn.addEventListener('click', function(){
-    if(confirm('确定清空所有生涯档案?')){
-      store.set('hs_sim.records', []);
-      openRecordsModal();
-    }
-  });
-}
-function openHelpModal(){
-  openModal('❓ 玩法说明',
-  '<div class="help-block"><b>🎯 目标</b><br>在高中六个学期里面对各种事件做出选择,经营你的六个数值,最终在高考揭晓你的结局。共有 '+ENDINGS.length+' 个结局等你解锁。</div>'+
-  '<div class="help-block"><b>📊 七个数值</b><br>🧬天赋(基本恒定,决定成长速度)· 📖成绩(决定高考结果)· 🏆竞赛(走竞赛路线后启用)· 💰金钱(门控消费类选项)· 🤝关系(影响学习状态与考试发挥,过低容易被霸凌)· ⭐知名度(≥60 时放大关系加成 ×1.5)· ❤️健康心态(过低会出问题,也影响考试发挥)。数值范围 0~100。</div>'+
-  '<div class="help-block"><b>⚠️ 心理与霸凌</b><br>关系太低可能遭遇小团体针对;恋爱中关系低还可能被造谣群嘲。心情长期过低会触发心理预警,花钱就医可以治疗(但成绩仍会下滑);不治疗且心态彻底崩溃时,故事会提前结束——主角没能等到高考。</div>'+
-  '<div class="help-block"><b>📅 学期</b><br>每学期会遇到若干事件(数量由难度决定),每个选择都会改变数值;学期末有考试,发挥好坏会反馈到成绩。特殊节点:高一下选科、高二会考、高三一模,以及最后的<b>高考</b>。</div>'+
-  '<div class="help-block"><b>🌱 种子</b><br>同一种子 + 同一出身 + 同一难度 = 完全相同的人生。把种子分享给朋友,体验彼此的经历。配套的「种子筛选器」页面可以按目标结局批量搜索种子;把结果里的<b>复现码</b>(种子@出身@难度,如 12@rich@fast)整串粘贴进生涯种子,会自动按该种子当时的出身与难度开局。</div>'+
-  '<div class="help-block"><b>🛣️ 特殊路线</b><br>· 竞赛:天赋 65+ 且成绩 55+ 时,教练会邀请你走竞赛路线(高三前);接受后启用竞赛能力值。竞赛外培课整局最多两次,晚自习也可刷竞赛题。高三一模公布省奖:省队降清北/C9 门槛、省一降 C9 门槛、省二降 985 门槛;竞赛能力 70+ 可直接<b>保送</b>顶尖名校。竞赛生出身自带竞赛路线<br>· 恋爱:恋爱后不再收到情书/表白;高二、高三下各会被老师和家长找谈话一次,关系低还可能被造谣群嘲导致分手;坚持到最后可修成正果<br>· 留学:走留学路线,或金钱 85+ 且高考低于 620 分,直接出国<br>· 创业 / 继承家业 / 网红:钱多或名气够高时抓住机会</div>'+
-  '<div class="help-block"><b>💾 保存</b><br>结局图鉴与生涯档案保存在本机浏览器,换设备不互通。结局卡片可长按保存图片分享。</div>');
-}
-
-// ---------- 启动 ----------
-initHome();
-
+init();
 </script>
 </body>
 </html>
