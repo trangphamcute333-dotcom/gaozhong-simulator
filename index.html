@@ -1222,6 +1222,14 @@ function showScreen(id){
   window.scrollTo(0, 0);
 }
 function statMeta(key){ for(var i=0;i<STAT_META.length;i++) if(STAT_META[i].key===key) return STAT_META[i]; return {icon:'?',name:key}; }
+// 🥚 彩蛋:种子号 20070401 / 20070108 → 直达种子筛选器;返回 true 表示已接管
+function trySeedEgg(v){
+  if(v === '20070401' || v === '20070108'){
+    window.location.href = '种子筛选器.html';
+    return true;
+  }
+  return false;
+}
 function endingById(id){ for(var i=0;i<ENDINGS.length;i++) if(ENDINGS[i].id===id) return ENDINGS[i]; return {icon:'❓',name:id,desc:''}; }
 function originById(id){ for(var i=0;i<ORIGINS.length;i++) if(ORIGINS[i].id===id) return ORIGINS[i]; return {icon:'❓',name:id}; }
 function originIdValid(id){ for(var i=0;i<ORIGINS.length;i++) if(ORIGINS[i].id===id) return true; return false; }
@@ -1248,13 +1256,14 @@ function initHome(){
   document.getElementById('seed-dice').addEventListener('click', function(){
     document.getElementById('seed-input').value = String(1 + Math.floor(Math.random()*999999));
   });
+  var seedInput = document.getElementById('seed-input');
+  // 彩蛋:输入过程中一旦凑齐种子号立即跳转;回车等同点击「开始生涯」
+  seedInput.addEventListener('input', function(){ trySeedEgg(this.value.trim()); });
+  seedInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') document.getElementById('btn-start').click(); });
   document.getElementById('btn-start').addEventListener('click', function(){
     var v = document.getElementById('seed-input').value.trim();
-    // 🥚 彩蛋:输入特定种子号,直达种子筛选器
-    if(v === '20070401' || v === '20070108'){
-      window.location.href = '种子筛选器.html';
-      return;
-    }
+    // 彩蛋:点按钮时也检查(兼容输入法/粘贴后直接点按钮的场景)
+    if(trySeedEgg(v)) return;
     // 种子筛选器复现码:种子@出身@难度(例如 12@rich@fast),按此配置直接开局,保证结果可复现
     var m = v.match(/^(\d{1,9})@([a-z_]+)@([a-z_]+)$/);
     if(m && originIdValid(m[2]) && DIFF[m[3]]){
