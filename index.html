@@ -867,12 +867,9 @@ var ENDINGS = [
  {id:'baosong', icon:'🏅', name:'保送生',    hint:'竞赛能力 70 以上',
   cond:function(g){return g.s.contest>=70;},
   desc:'竞赛能力全国顶尖,高三寒假就收到了顶尖名校的保送 offer。高考对你而言,只是一场走过场的仪式。'},
- {id:'abroad', icon:'✈️', name:'出国留学',  hint:'走留学路线,高考 400 分以上',
-  cond:function(g){return g.f.abroad && g.s.money>=40 && g.score>=400;},
+ {id:'abroad', icon:'✈️', name:'出国留学',  hint:'走留学路线,金钱 50+,高考 400 分以上',
+  cond:function(g){return g.f.abroad && g.s.money>=50 && g.score>=400;},
   desc:'拿到海外大学 offer,收拾行囊踏上留学之路,人生多了另一种可能。'},
- {id:'abroad_money', icon:'✈️', name:'出国留学', hint:'金钱 85+,高考低于 620 分',
-  cond:function(g){return g.s.money>=85 && g.score<620 && !g.f.biz && !g.f.internet;},
-  desc:'没有特意准备留学,但家里的条件摆在那里。你放弃了国内录取,收拾行囊奔赴大洋彼岸。'},
  {id:'startup', icon:'💼', name:'辍学创业',  hint:'经营过生意,高考低于 530 分',
   cond:function(g){return g.f.biz && g.s.money>=60 && g.score<530;},
   desc:'高中就开始折腾生意,毕业后全职创业,成了同学中最先「搞到钱」的人。'},
@@ -1222,10 +1219,14 @@ function showScreen(id){
   window.scrollTo(0, 0);
 }
 function statMeta(key){ for(var i=0;i<STAT_META.length;i++) if(STAT_META[i].key===key) return STAT_META[i]; return {icon:'?',name:key}; }
-// 🥚 彩蛋:种子号 20070401 / 20070108 → 直达种子筛选器;返回 true 表示已接管
+// 🥚 彩蛋:种子号 20070401 → 种子筛选器;20070108 → 事件图鉴;返回 true 表示已接管
 function trySeedEgg(v){
-  if(v === '20070401' || v === '20070108'){
+  if(v === '20070401'){
     window.location.href = '种子筛选器.html';
+    return true;
+  }
+  if(v === '20070108'){
+    window.location.href = '事件图鉴.html';
     return true;
   }
   return false;
@@ -1735,7 +1736,7 @@ function openHelpModal(){
   '<div class="help-block"><b>⚠️ 心理与霸凌</b><br>关系太低可能遭遇小团体针对;恋爱中关系低还可能被造谣群嘲。心情长期过低会触发心理预警,花钱就医可以治疗(但成绩仍会下滑);不治疗且心态彻底崩溃时,故事会提前结束——主角没能等到高考。</div>'+
   '<div class="help-block"><b>📅 学期</b><br>每学期会遇到若干事件(数量由难度决定),每个选择都会改变数值;学期末有考试,发挥好坏会反馈到成绩。特殊节点:高一下选科、高二会考、高三一模,以及最后的<b>高考</b>。</div>'+
   '<div class="help-block"><b>🌱 种子</b><br>同一种子 + 同一出身 + 同一难度 = 完全相同的人生。把种子分享给朋友,体验彼此的经历。配套的「种子筛选器」页面可以按目标结局批量搜索种子;把结果里的<b>复现码</b>(种子@出身@难度,如 12@rich@fast)整串粘贴进生涯种子,会自动按该种子当时的出身与难度开局。</div>'+
-  '<div class="help-block"><b>🛣️ 特殊路线</b><br>· 竞赛:天赋 65+ 且成绩 55+ 时,教练会邀请你走竞赛路线(高三前);接受后启用竞赛能力值。竞赛外培课整局最多两次,晚自习也可刷竞赛题。高三一模公布省奖:省队降清北/C9 门槛、省一降 C9 门槛、省二降 985 门槛;竞赛能力 70+ 可直接<b>保送</b>顶尖名校。竞赛生出身自带竞赛路线<br>· 恋爱:恋爱后不再收到情书/表白;高二、高三下各会被老师和家长找谈话一次,关系低还可能被造谣群嘲导致分手;坚持到最后可修成正果<br>· 留学:走留学路线,或金钱 85+ 且高考低于 620 分,直接出国<br>· 创业 / 继承家业 / 网红:钱多或名气够高时抓住机会</div>'+
+  '<div class="help-block"><b>🛣️ 特殊路线</b><br>· 竞赛:天赋 65+ 且成绩 55+ 时,教练会邀请你走竞赛路线(高三前);接受后启用竞赛能力值。竞赛外培课整局最多两次,晚自习也可刷竞赛题。高三一模公布省奖:省队降清北/C9 门槛、省一降 C9 门槛、省二降 985 门槛;竞赛能力 70+ 可直接<b>保送</b>顶尖名校。竞赛生出身自带竞赛路线<br>· 恋爱:恋爱后不再收到情书/表白;高二、高三下各会被老师和家长找谈话一次,关系低还可能被造谣群嘲导致分手;坚持到最后可修成正果<br>· 留学:在留学的选项里抓住机会(需要一定金钱),走留学路线且金钱 50+、高考 400 分以上即可出国<br>· 创业 / 继承家业 / 网红:钱多或名气够高时抓住机会</div>'+
   '<div class="help-block"><b>💾 保存</b><br>结局图鉴与生涯档案保存在本机浏览器,换设备不互通。结局卡片可长按保存图片分享。</div>');
 }
 

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📚 事件图鉴 · 高中生涯模拟器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(180deg,#f7f4ea 0%,#eef3ec 100%);background-attachment:fixed;color:#2d3748;min-height:100vh;font-size:16px}
+#app{max-width:560px;margin:0 auto;padding:16px 16px 56px}
+h1{font-size:26px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
+.sub{text-align:center;color:#718096;font-size:13.5px;margin-bottom:16px}
+.sem-head{font-size:15px;font-weight:800;color:#2f855a;margin:20px 4px 8px}
+.card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 14px rgba(45,55,72,.08);margin-bottom:12px}
+.ev-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.ev-title{font-size:17px;font-weight:800}
+.ev-desc{font-size:14px;color:#4a5568;line-height:1.7;margin-bottom:8px}
+.badge{font-size:11.5px;color:#718096;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:20px;padding:1px 8px;white-space:nowrap}
+.badge.force{color:#c53030;border-color:#feb2b2;background:#fff5f5}
+.cond-line{font-size:12.5px;color:#718096;margin-bottom:8px;line-height:1.6}
+.cond-line b{color:#4a5568}
+.opt-box{background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 11px;margin-bottom:7px;font-size:13.5px;line-height:1.6}
+.opt-box:last-child{margin-bottom:0}
+.opt-text{font-weight:600;color:#2d3748}
+.fx-line{font-size:12.5px;color:#2b6cb0;margin-top:3px}
+.fx-line b{font-weight:600}
+.roll-line{font-size:12.5px;color:#dd6b20;margin-top:3px;padding-left:10px;border-left:2px solid #feebc8}
+.flag-line{font-size:12.5px;color:#276749;margin-top:3px}
+.need-line{font-size:12.5px;color:#e53e3e;margin-top:3px;font-weight:600}
+.footer-note{text-align:center;color:#a0aec0;font-size:12px;margin-top:26px;line-height:1.8}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>📚 事件图鉴</h1>
+  <p class="sub">高中生涯模拟器 · 全部事件、选项数值与概率一览</p>
+  <div id="events"></div>
+  <p class="footer-note">数值为原始效果,实际生效值 = 显示值 × 难度系数(快进 1.25,其余 1)<br>生成于 <span id="build-time">/*__BUILD_TIME__*/</span><br><a href="index.html" style="color:#718096">← 返回游戏主页</a></p>
+</div>
+<script>
+/*__ENGINE__*/
+// ============ 事件图鉴 UI(独立页面) ============
+function metaOf(key){ for(var i=0;i<STAT_META.length;i++) if(STAT_META[i].key===key) return STAT_META[i]; return {icon:'❓',name:key}; }
+function flagName(f){ return FLAG_META[f] || f; }
+function fxText(fx){
+  if(!fx) return '';
+  var parts = [];
+  for(var k in fx){
+    var m = metaOf(k);
+    parts.push(m.icon+' '+m.name+' '+(fx[k]>0?'+':'')+fx[k]);
+  }
+  return parts.join(' · ');
+}
+function needText(need){
+  if(!need) return '';
+  var parts = [];
+  for(var k in need){
+    if(k === 'flag') parts.push('状态「'+flagName(need.flag)+'」');
+    else parts.push(metaOf(k).icon+metaOf(k).name+' ≥ '+need[k]);
+  }
+  return parts.join(' · ');
+}
+function condText(cond){
+  if(!cond) return '';
+  var parts = [];
+  if(cond.stat) for(var k in cond.stat) parts.push(metaOf(k).icon+metaOf(k).name+' ≥ '+cond.stat[k]);
+  if(cond.statMax) for(var k2 in cond.statMax) parts.push(metaOf(k2).icon+metaOf(k2).name+' ≤ '+cond.statMax[k2]);
+  if(cond.flag) parts.push('状态「'+flagName(cond.flag)+'」');
+  if(cond.notFlag) parts.push('无状态「'+flagName(cond.notFlag)+'」');
+  return parts.join(' · ');
+}
+function semText(e){
+  var sems = e.sem.slice().sort(function(a,b){ return a-b; });
+  var names = sems.map(function(s){ return SEM_NAMES[s-1]; });
+  if(names.length === 6) return '全学期';
+  return names.join(' / ');
+}
+function evBadges(e){
+  var b = '';
+  if(e.forceEvery) b += '<span class="badge force">每学期强制</span>';
+  if(e.forceSem)   b += '<span class="badge force">指定学期强制</span>';
+  if(e.repeat)     b += '<span class="badge">可重复'+(e.max ? ' · 最多 '+e.max+' 次' : '')+'</span>';
+  if(e.w && e.w>1) b += '<span class="badge">权重 ×'+e.w+'</span>';
+  return b;
+}
+function cardHtml(e){
+  var html = '<div class="card">'+
+    '<div class="ev-head"><span class="ev-title">'+e.icon+' '+e.title+'</span>'+evBadges(e)+'</div>'+
+    '<div class="cond-line">📅 <b>'+semText(e)+'</b></div>'+
+    '<div class="ev-desc">'+e.desc+'</div>';
+  if(e.cond)        html += '<div class="cond-line">出现条件:'+condText(e.cond)+'</div>';
+  if(e.forceCond)   html += '<div class="cond-line">强制条件:'+condText(e.forceCond)+'</div>';
+  e.opts.forEach(function(o){
+    html += '<div class="opt-box"><span class="opt-text">'+o.text+'</span>';
+    if(o.need) html += '<div class="need-line">需要 '+needText(o.need)+'</div>';
+    if(o.fx && Object.keys(o.fx).length) html += '<div class="fx-line">数值:'+fxText(o.fx)+'</div>';
+    if(o.roll){
+      o.roll.forEach(function(r){
+        var extra = '';
+        if(r.fx && Object.keys(r.fx).length) extra += ' → '+fxText(r.fx);
+        if(r.flag)  extra += ' → 获得状态 '+r.flag.map(flagName).join('、');
+        if(r.unflag) extra += ' → 移除状态 '+r.unflag.map(flagName).join('、');
+        html += '<div class="roll-line">🎲 '+Math.round(r.p*100)+'%:'+(r.say||'')+extra+'</div>';
+      });
+    }
+    if(o.flag)   html += '<div class="flag-line">获得状态:'+o.flag.map(flagName).join('、')+'</div>';
+    if(o.unflag) html += '<div class="flag-line">移除状态:'+o.unflag.map(flagName).join('、')+'</div>';
+    if(o.initContest) html += '<div class="flag-line">启用竞赛能力值 🏆(初始值由天赋决定)</div>';
+    html += '</div>';
+  });
+  return html + '</div>';
+}
+function render(){
+  var groups = [];
+  for(var s=1;s<=6;s++) groups.push({sem:s, items:[]});
+  EVENTS.forEach(function(e){
+    var min = Math.min.apply(null, e.sem);
+    groups[min-1].items.push(e);
+  });
+  var html = '<div class="sub" style="margin-bottom:4px">共 '+EVENTS.length+' 个事件 · 按最早可用学期分组</div>';
+  groups.forEach(function(g){
+    if(!g.items.length) return;
+    html += '<div class="sem-head">📖 '+SEM_NAMES[g.sem-1]+' 起</div>';
+    g.items.forEach(function(e){ html += cardHtml(e); });
+  });
+  document.getElementById('events').innerHTML = html;
+}
+render();
+</script>
+</body>
+</html>
