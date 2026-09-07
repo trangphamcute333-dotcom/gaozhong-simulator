@@ -132,6 +132,11 @@ h1{font-size:29px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
 .help-block b{color:#2d3748}
 .small-link{font-size:12.5px;color:#718096;text-align:center;margin-top:14px}
 .footer-note{text-align:center;color:#a0aec0;font-size:12px;margin-top:26px}
+/* 人生时间线 */
+.tl-sem{font-size:12.5px;font-weight:700;color:#2f855a;margin:10px 0 4px}
+.tl-item{font-size:13px;color:#4a5568;line-height:1.7;padding:3px 0 3px 10px;border-left:2px solid #e2e8f0;margin-left:4px}
+.tl-foot{font-size:12px;color:#a0aec0;margin-top:10px}
+#trend-canvas{width:100%;height:auto;border-radius:10px}
 /* 全成就奖励:金色典藏配色(覆盖式主题,原样保留默认绿色规则) */
 body.theme-gold{background:linear-gradient(180deg,#fdf6e3 0%,#f3e9cf 100%)}
 body.theme-gold .btn.primary{background:#b7791f;box-shadow:0 3px 10px rgba(183,121,31,.35)}
@@ -152,6 +157,7 @@ body.theme-gold .roll-row.active{background:#fffbeb;border-color:#b7791f;color:#
 body.theme-gold .roll-row.hit{background:#f6e05e;border-color:#b7791f}
 body.theme-gold .roll-result{color:#b7791f}
 body.theme-gold .end-item.unlocked{background:#fffbeb;border-color:#f6e05e}
+body.theme-gold .tl-sem{color:#b7791f}
 /* 全成就庆祝弹层 */
 #celebrate-overlay{position:fixed;inset:0;background:rgba(26,32,44,.62);display:none;align-items:center;justify-content:center;z-index:70;padding:16px}
 #celebrate-overlay.show{display:flex}
@@ -195,6 +201,10 @@ body.theme-gold .end-item.unlocked{background:#fffbeb;border-color:#f6e05e}
     <h1 style="font-size:23px">🚪 选择你的出身</h1>
     <p class="sub" id="origin-sub">出身决定起点,但决定不了终点</p>
     <div class="origin-grid" id="origin-grid"></div>
+    <label id="ngp-row" style="display:none;align-items:center;gap:8px;margin:12px 2px 0;font-size:13.5px;color:#4a5568">
+      <input type="checkbox" id="chk-ngp"> 🎁 传承加成(全成就解锁):天赋 +3 · 金钱 +10 · 健康心态 +5
+      <span style="color:#a0aec0">(会改变种子结果,复现种子时请勿勾选)</span>
+    </label>
     <button class="btn primary" id="btn-origin-ok" style="margin-top:14px" disabled>✅ 确认出身,开启高中生活</button>
   </div>
 
@@ -222,6 +232,10 @@ body.theme-gold .end-item.unlocked{background:#fffbeb;border-color:#f6e05e}
       <div class="ending-desc" id="ending-desc"></div>
     </div>
     <div class="card">
+      <div class="row-label">📈 三年数值曲线</div>
+      <canvas id="trend-canvas"></canvas>
+    </div>
+    <div class="card">
       <div class="row-label">在总结卡片上留下你的名字</div>
       <div class="name-row">
         <input id="name-input" placeholder="输入名字,不填默认「生蚝蒸」" maxlength="10">
@@ -229,8 +243,13 @@ body.theme-gold .end-item.unlocked{background:#fffbeb;border-color:#f6e05e}
       <img class="card-img" id="card-img" alt="生涯总结卡片">
       <p class="save-hint">💾 长按上方图片 → 保存图片 / 分享给朋友</p>
     </div>
+    <details class="card" style="padding:14px 18px">
+      <summary style="cursor:pointer;font-size:13px;color:#718096;font-weight:600">📜 人生时间线(点击展开)</summary>
+      <div id="timeline-box" style="margin-top:10px"></div>
+    </details>
     <button class="btn primary" id="btn-again">🔄 同种子再来一局</button>
     <div class="btn-row" style="margin-top:10px">
+      <button class="btn ghost" id="btn-share">📤 分享链接</button>
       <button class="btn ghost" id="btn-rehome">🏠 回到主页</button>
       <button class="btn ghost" id="btn-ending-compendium">📖 查看图鉴</button>
     </div>
@@ -970,10 +989,13 @@ function createGame(seed, diffId, originId){
     stats.contest = clamp(Math.round(talent*0.55 - 10) + 8, 10, 55);
     flags.contest_enabled = true;
   }
+  // 学期数值历史快照(供结局页画曲线;纯记录,不消耗 RNG,不影响确定性)
+  var hist0 = {sem:0, stats:{}};
+  for(var hk in stats) hist0.stats[hk] = stats[hk];
   return {
     seed: seed>>>0, diff: diffId, origin: originId, originObj: o,
     stats: stats, flags: flags, sem: 0, used: [], log: [], scores: [], counts: {},
-    school: genSchoolName(rng), rng: rng,
+    history: [hist0], school: genSchoolName(rng), rng: rng,
   };
 }
 
@@ -1132,6 +1154,10 @@ function runExam(g){
     }
   }
   g.scores.push({sem:g.sem, score:score, gaokao:isGaokao});
+  // 学期末快照(考试反馈已生效)
+  var snap = {sem:g.sem, stats:{}};
+  for(var sk in g.stats) snap.stats[sk] = g.stats[sk];
+  g.history.push(snap);
   return {score:score, isGaokao:isGaokao, delta:delta, notes:notes, bonuses:eb.bonuses};
 }
 
@@ -1292,6 +1318,102 @@ function showCelebration(){
 }
 function hideCelebration(){ document.getElementById('celebrate-overlay').classList.remove('show'); }
 
+// ---------- 结局页:人生时间线 + 三年数值曲线 ----------
+function renderTimeline(){
+  var box = document.getElementById('timeline-box');
+  if(!box || !G) return;
+  var groups = [];
+  G.log.forEach(function(e){
+    var g = null;
+    for(var i=0;i<groups.length;i++) if(groups[i].sem === e.sem) g = groups[i];
+    if(!g){ g = {sem:e.sem, items:[]}; groups.push(g); }
+    g.items.push(e);
+  });
+  groups.sort(function(a,b){ return a.sem - b.sem; });
+  var html = '';
+  groups.forEach(function(g){
+    html += '<div class="tl-sem">' + (g.sem===0 ? '🚪 入学' : SEM_NAMES[g.sem-1]) + '</div>';
+    g.items.forEach(function(e){ html += '<div class="tl-item">' + e.title + ' — ' + e.text + '</div>'; });
+  });
+  html += '<div class="tl-foot">…… 共经历 ' + G.log.length + ' 次选择</div>';
+  box.innerHTML = html;
+}
+function renderTrend(){
+  var cv = document.getElementById('trend-canvas');
+  if(!cv || !G || !G.history || G.history.length < 2) return;
+  var W = 720, H = 330, S = 2;
+  cv.width = W*S; cv.height = H*S;
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  var L = 46, R = 12, T = 14, B = 32;
+  var hx = G.history, n = hx.length;
+  function X(i){ return L + (W-L-R) * (n===1 ? 0 : i/(n-1)); }
+  function Y(v){ return T + (100-v)/100 * (H-T-B); }
+  ctx.font = '11px ' + FONT;
+  [0,25,50,75,100].forEach(function(v){
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W-R, Y(v)); ctx.stroke();
+    ctx.fillStyle = '#a0aec0'; ctx.textAlign = 'right'; ctx.fillText(String(v), L-6, Y(v)+4);
+  });
+  ctx.textAlign = 'center';
+  hx.forEach(function(h, i){
+    ctx.fillStyle = '#718096';
+    ctx.fillText(h.sem===0 ? '入学' : SEM_NAMES[h.sem-1].replace('学期',''), X(i), H-8);
+  });
+  STAT_META.forEach(function(m){
+    var has = false;
+    for(var i=0;i<n;i++) if(hx[i].stats[m.key] !== undefined){ has = true; break; }
+    if(!has) return;
+    ctx.strokeStyle = m.color; ctx.lineWidth = 2;
+    ctx.beginPath();
+    var started = false;
+    for(var j=0;j<n;j++){
+      var v = hx[j].stats[m.key];
+      if(v === undefined){ started = false; continue; }
+      if(!started){ ctx.moveTo(X(j), Y(v)); started = true; }
+      else ctx.lineTo(X(j), Y(v));
+    }
+    ctx.stroke();
+    for(var k=0;k<n;k++){
+      var v2 = hx[k].stats[m.key];
+      if(v2 === undefined) continue;
+      ctx.fillStyle = m.color;
+      ctx.beginPath(); ctx.arc(X(k), Y(v2), 2.5, 0, Math.PI*2); ctx.fill();
+    }
+  });
+  // 图例
+  var lx = L, ly = H-10;
+  ctx.textAlign = 'left';
+  STAT_META.forEach(function(m){
+    var has = false;
+    for(var i=0;i<n;i++) if(hx[i].stats[m.key] !== undefined){ has = true; break; }
+    if(!has) return;
+    var label = m.icon + m.name;
+    ctx.fillStyle = m.color; ctx.fillText(label, lx, ly);
+    lx += ctx.measureText(label).width + 12;
+  });
+}
+// 复制文本到剪贴板(带回退)
+function copyText(text, btn){
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+    done(ok);
+  }
+  function done(ok){
+    var old = btn.textContent;
+    btn.textContent = ok ? '✅ 链接已复制' : '复制失败,长按复制';
+    setTimeout(function(){ btn.textContent = old; }, 1600);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done(true); }, fallback);
+  } else { fallback(); }
+}
+
 function $(sel){ return document.querySelector(sel); }
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
@@ -1385,6 +1507,10 @@ function renderOrigins(){
   selOrigin = null;
   var ok = document.getElementById('btn-origin-ok');
   ok.disabled = true;
+  // 全成就解锁:传承加成勾选框
+  var ngpRow = document.getElementById('ngp-row');
+  ngpRow.style.display = allEndingsUnlocked() ? 'flex' : 'none';
+  document.getElementById('chk-ngp').checked = false;
   var grid = document.getElementById('origin-grid');
   var html = '';
   ORIGINS.forEach(function(o){
@@ -1409,8 +1535,16 @@ function renderOrigins(){
 }
 function startGame(){
   G = createGame(chosenSeed, chosenDiff, selOrigin);
+  // 传承加成(全成就解锁,默认关闭;勾选会改变种子结果)
+  var ngp = allEndingsUnlocked() && document.getElementById('chk-ngp').checked;
+  if(ngp){
+    G.stats.talent  = clamp(G.stats.talent + 3, 0, 100);
+    G.stats.money   = clamp(G.stats.money + 10, 0, 100);
+    G.stats.health  = clamp(G.stats.health + 5, 0, 100);
+    G.ngp = true;
+  }
   semesterStart(G);
-  G.log.push({sem:0, title:'入学', text:'你踏入了 '+G.school+' 的校门'});
+  G.log.push({sem:0, title:'入学', text:'你踏入了 '+G.school+' 的校门'+(ngp ? '(带着上一世的馈赠:🧬+3 💰+10 ❤️+5)' : '')});
   updateHud();
   renderStats();
   pendingEvents = drawEvents(G);
@@ -1634,7 +1768,7 @@ function saveEndingRecord(ending, score){
   endings[ending.id] = true;
   store.set('hs_sim.endings', endings);
   var records = store.get('hs_sim.records', []);
-  records.unshift({seed:G.seed, diff:G.diff, origin:G.origin, ending:ending.id, score:score, t:Date.now()});
+  records.unshift({seed:G.seed, diff:G.diff, origin:G.origin, ending:ending.id, score:score, ngp:!!G.ngp, t:Date.now()});
   if(records.length>30) records.length = 30;
   store.set('hs_sim.records', records);
   // 全成就检测:解锁最后一个结局后,弹出庆祝界面
@@ -1651,6 +1785,8 @@ function doEnding(r){
   $('#ending-desc').innerHTML = '<b style="color:'+(isGoldTheme()?'#b7791f':'#2f855a')+'">🎓 高考总分 '+r.score+' 分</b> · '+rankText(r.score,true)+'<br><br>'+ending.desc;
   $('#name-input').value = '';
   drawCard('');
+  renderTimeline();
+  renderTrend();
   showScreen('screen-ending');
 }
 // 抑郁未治疗、心态崩溃:强制提前结束(主角自杀了)
@@ -1664,10 +1800,16 @@ function doEarlyEnding(ending){
   $('#ending-desc').innerHTML = '<b style="color:#c53030">'+SEM_NAMES[G.sem-1]+' · 未能参加高考</b><br><br>'+ending.desc;
   $('#name-input').value = '';
   drawCard('');
+  renderTimeline();
+  renderTrend();
   showScreen('screen-ending');
 }
 $('#btn-again').addEventListener('click', function(){ renderOrigins(); showScreen('screen-origin'); });
 $('#btn-rehome').addEventListener('click', function(){ showScreen('screen-home'); });
+document.getElementById('btn-share').addEventListener('click', function(){
+  if(!G) return;
+  copyText(location.href.split('?')[0].split('#')[0] + '?seed=' + G.seed + '@' + G.origin + '@' + G.diff, this);
+});
 $('#btn-ending-compendium').addEventListener('click', openEndingsModal);
 $('#name-input').addEventListener('input', function(){ drawCard(this.value.trim()); });
 
@@ -1813,7 +1955,7 @@ function openRecordsModal(){
   records.forEach(function(r){
     var e = endingById(r.ending), o = originById(r.origin);
     html += '<div class="rec-item"><b>'+e.icon+' '+e.name+'</b> · '+(r.score===null?'未能参加高考':r.score+' 分')+'<br>'+
-      '出身:'+o.icon+' '+o.name+' · '+DIFF[r.diff].name+' · 种子 '+r.seed+' · '+new Date(r.t).toLocaleDateString('zh-CN')+'</div>';
+      '出身:'+o.icon+' '+o.name+' · '+DIFF[r.diff].name+' · 种子 '+r.seed+(r.ngp?' · 🎁传承':'')+' · '+new Date(r.t).toLocaleDateString('zh-CN')+'</div>';
   });
   if(records.length) html += '<button class="btn ghost" id="btn-clear-records" style="width:100%;color:#c53030;border-color:#c53030">🗑 清空档案</button>';
   openModal('🗂 生涯档案', html);
@@ -1844,6 +1986,23 @@ applyTheme(store.get('hs_sim.theme', 'green'));
 if(allEndingsUnlocked() && !store.get('hs_sim.all_celebrated', false)){
   setTimeout(showCelebration, 1200);
 }
+// 链接分享:?seed=12@rich@fast(带出身/难度直接开局;纯数字填入输入框;彩蛋号同样生效)
+(function(){
+  var sm = location.search.match(/[?&]seed=([^&]+)/);
+  if(!sm) return;
+  var sval = decodeURIComponent(sm[1]).trim();
+  if(!sval || trySeedEgg(sval)) return;
+  var sp = sval.match(/^(\d{1,9})@([a-z_]+)@([a-z_]+)$/);
+  if(sp && originIdValid(sp[2]) && DIFF[sp[3]]){
+    chosenSeed = parseInt(sp[1],10)>>>0 || 1;
+    selOrigin = sp[2];
+    setDiffUI(sp[3]);
+    startGame();
+  } else if(/^\d+$/.test(sval)){
+    chosenSeed = parseInt(sval,10)>>>0 || 1;
+    document.getElementById('seed-input').value = String(chosenSeed);
+  }
+})();
 
 </script>
 </body>

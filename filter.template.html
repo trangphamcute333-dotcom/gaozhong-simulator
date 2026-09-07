@@ -24,6 +24,20 @@ h1{font-size:26px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
 .preset-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .preset-chip{font-size:12.5px;background:#f0fff4;color:#276749;border:1.5px solid #c6f6d5;border-radius:20px;padding:4px 10px;cursor:pointer;font-family:inherit}
 .footer-note{text-align:center;color:#a0aec0;font-size:12px;margin-top:26px;line-height:1.8}
+/* 种子回放弹层 */
+#replay-overlay{position:fixed;inset:0;background:rgba(26,32,44,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+#replay-overlay.show{display:flex}
+.replay-card{background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:86vh;display:flex;flex-direction:column;padding:16px}
+.replay-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:6px;gap:8px}
+#replay-steps{overflow-y:auto;flex:1;min-height:120px;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;background:#f7fafc;font-size:13px;line-height:1.7}
+.rp-sem{font-weight:700;color:#2f855a;margin:8px 0 2px;font-size:12.5px}
+.rp-event{color:#4a5568;padding:2px 0}
+.rp-exam{color:#dd6b20;font-weight:600;padding:2px 0}
+.rp-end{color:#2d3748;font-weight:700;padding:4px 0}
+.replay-actions{display:flex;gap:8px;margin-top:10px}
+.replay-actions .use-btn{flex:1;text-align:center;font-size:13px;padding:8px}
+.item-btns{display:flex;flex-direction:column;gap:5px;align-items:stretch}
+.item-btns .use-btn{text-align:center}
 </style>
 </head>
 <body>
@@ -53,7 +67,22 @@ h1{font-size:26px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
     <div class="filter-progress" id="filter-progress">⬆️ 选好目标后点击「开始筛选」</div>
     <div id="filter-results"></div>
   </div>
-  <p class="footer-note">每个种子用多种「选牌策略」模拟,任一策略达成目标即收录;也可以固定策略,例如「仅总选第一项/最后一项」——全程只点对应选项即可复现<br>点「📋 复制复现码」,把整串粘贴回游戏主页的「生涯种子」,会自动按该种子的出身与难度开局<br>同种子 + 同出身 + 同难度 + 同样思路 = 结果可复现<br>生成于 <span id="build-time">/*__BUILD_TIME__*/</span><br><a href="index.html" style="color:#718096">← 返回游戏主页</a></p>
+  <p class="footer-note">每个种子用多种「选牌策略」模拟,任一策略达成目标即收录;也可以固定策略,例如「仅总选第一项/最后一项」——全程只点对应选项即可复现<br>点「📋 复制复现码」,把整串粘贴回游戏主页的「生涯种子」,会自动按该种子的出身与难度开局;点「▶ 回放」看这个种子每一步的选择与数值变化<br>同种子 + 同出身 + 同难度 + 同样思路 = 结果可复现<br>生成于 <span id="build-time">/*__BUILD_TIME__*/</span><br><a href="index.html" style="color:#718096">← 返回游戏主页</a></p>
+  <!-- 种子回放弹层 -->
+  <div id="replay-overlay">
+    <div class="replay-card">
+      <div class="replay-head">
+        <span id="replay-title">▶ 回放</span>
+        <button id="btn-replay-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#718096;font-family:inherit">✕</button>
+      </div>
+      <div class="filter-progress" id="replay-progress"></div>
+      <div id="replay-steps"></div>
+      <div class="replay-actions">
+        <button class="use-btn" id="btn-replay-all">⚡ 全部展开</button>
+        <button class="use-btn" id="btn-replay-close2">关闭</button>
+      </div>
+    </div>
+  </div>
 </div>
 <script>
 /*__ENGINE__*/
@@ -142,18 +171,24 @@ function runFilter(){
       } else {
         var e = endingById(target);
         var html = '';
-        found.slice(0, 50).forEach(function(f){
+        found.slice(0, 50).forEach(function(f, idx){
           // 只有总选第一项/最后一项是人类能照着复现的;贪心/随机是脚本策略,仅作参考
           var replayable = (f.strategyId === 'first' || f.strategyId === 'last');
           html += '<div class="filter-item"><span><b>🎲 种子 '+f.seed+'</b> · '+originById(f.origin).icon+originById(f.origin).name+' · '+DIFF[f.diff].name+'<br>'+
             e.icon+' '+e.name+(f.score===null?' · 未能参加高考':' · 高考 '+f.score+' 分')+' · 策略:'+f.strategy+
             (replayable ? '' : ' ⚠️ 脚本策略,手动复现难')+'</span>'+
-            '<button class="use-btn" data-spec="'+f.seed+'@'+f.origin+'@'+f.diff+'">📋 复制复现码</button></div>';
+            '<span class="item-btns">'+
+            '<button class="use-btn" data-spec="'+f.seed+'@'+f.origin+'@'+f.diff+'">📋 复制复现码</button>'+
+            '<button class="use-btn replay-btn" data-idx="'+idx+'">▶ 回放</button>'+
+            '</span></div>';
         });
         if(found.length > 50) html += '<div class="filter-progress">仅显示前 50 个</div>';
         resBox.innerHTML = html;
-        resBox.querySelectorAll('.use-btn').forEach(function(b){
+        resBox.querySelectorAll('.use-btn[data-spec]').forEach(function(b){
           b.addEventListener('click', function(){ copySpec(b.dataset.spec, b); });
+        });
+        resBox.querySelectorAll('.replay-btn').forEach(function(b){
+          b.addEventListener('click', function(){ startReplay(found[+b.dataset.idx]); });
         });
       }
     }
@@ -183,7 +218,95 @@ function copySpec(spec, btn){
   } else { fallbackCopy(); }
 }
 
+// ============ 种子回放:按同一策略复现整局,逐步展示选择与数值变化 ============
+var replayTimer = null;
+function statIcon(key){ for(var i=0;i<STAT_META.length;i++) if(STAT_META[i].key===key) return STAT_META[i].icon; return '?'; }
+function replayCollect(g, pick){
+  var steps = [];
+  var fe;
+  while(g.sem < 6){
+    semesterStart(g);
+    fe = forcedEnding(g);
+    if(fe){ steps.push({type:'end', ending:fe, score:null}); return steps; }
+    var evs = drawEvents(g);
+    if(evs.length === 0){ steps.push({type:'end', ending:null, score:null}); return steps; }
+    for(var i=0;i<evs.length;i++){
+      var opts = eligibleOpts(g, evs[i]);
+      if(opts.length === 0){ steps.push({type:'end', ending:null, score:null}); return steps; }
+      var pr = applyOption(g, evs[i], pick(g, evs[i], opts));
+      steps.push({type:'event', sem:g.sem, title:evs[i].title, text:g.log[g.log.length-1].text, deltas:pr.deltas});
+      fe = forcedEnding(g);
+      if(fe){ steps.push({type:'end', ending:fe, score:null}); return steps; }
+    }
+    var r = runExam(g);
+    steps.push({type:'exam', sem:g.sem, score:r.score, isGaokao:r.isGaokao});
+    fe = forcedEnding(g);
+    if(fe){ steps.push({type:'end', ending:fe, score:null}); return steps; }
+  }
+  var last = g.scores[g.scores.length-1];
+  steps.push({type:'end', ending:determineEnding(g, last.score).id, score:last.score});
+  return steps;
+}
+function stepHtml(s){
+  if(s.type === 'event'){
+    var dparts = [];
+    for(var k in s.deltas){ if(s.deltas[k] !== 0) dparts.push(statIcon(k)+' '+(s.deltas[k]>0?'+':'')+s.deltas[k]); }
+    return '<div class="rp-event"><b>'+s.title+'</b><br>选择:'+s.text+(dparts.length ? ' <span style="color:#2b6cb0">('+dparts.join(' ')+')</span>' : '')+'</div>';
+  }
+  if(s.type === 'exam'){
+    return '<div class="rp-exam">📊 '+SEM_NAMES[s.sem-1]+': '+(s.isGaokao?'高考':'考试')+' '+s.score+' 分</div>';
+  }
+  var e = endingById(s.ending);
+  return '<div class="rp-end">'+e.icon+' '+e.name+(s.score===null ? '(未能参加高考)' : ' · 高考 '+s.score+' 分')+'</div>';
+}
+function startReplay(f){
+  if(replayTimer){ clearInterval(replayTimer); replayTimer = null; }
+  var st = null;
+  for(var i=0;i<PICK_STRATEGIES.length;i++) if(PICK_STRATEGIES[i].id === f.strategyId) st = PICK_STRATEGIES[i];
+  if(!st) return;
+  var g = createGame(f.seed, f.diff, f.origin);
+  var steps = replayCollect(g, st.fn);
+  document.getElementById('replay-title').textContent =
+    '▶ 回放 · 种子 '+f.seed+' · '+originById(f.origin).icon+originById(f.origin).name+' · '+DIFF[f.diff].name+' · '+st.name;
+  var box = document.getElementById('replay-steps');
+  var prog = document.getElementById('replay-progress');
+  box.innerHTML = '';
+  document.getElementById('replay-overlay').classList.add('show');
+  var idx = 0, lastSem = -1;
+  function renderOne(){
+    if(idx >= steps.length){
+      prog.textContent = '✅ 回放完成,共 '+steps.length+' 步';
+      if(replayTimer){ clearInterval(replayTimer); replayTimer = null; }
+      return;
+    }
+    var s = steps[idx];
+    if(s.sem !== undefined && s.sem !== lastSem){ lastSem = s.sem; box.innerHTML += '<div class="rp-sem">'+SEM_NAMES[s.sem-1]+'</div>'; }
+    box.innerHTML += stepHtml(s);
+    box.scrollTop = box.scrollHeight;
+    idx++;
+    prog.textContent = '▶ 回放中 '+idx+' / '+steps.length+' 步';
+  }
+  renderOne();
+  replayTimer = setInterval(renderOne, 350);
+  document.getElementById('btn-replay-all').onclick = function(){
+    if(replayTimer){ clearInterval(replayTimer); replayTimer = null; }
+    while(idx < steps.length){
+      var s2 = steps[idx];
+      if(s2.sem !== undefined && s2.sem !== lastSem){ lastSem = s2.sem; box.innerHTML += '<div class="rp-sem">'+SEM_NAMES[s2.sem-1]+'</div>'; }
+      box.innerHTML += stepHtml(s2);
+      idx++;
+    }
+    prog.textContent = '✅ 回放完成,共 '+steps.length+' 步';
+  };
+}
+function closeReplay(){
+  if(replayTimer){ clearInterval(replayTimer); replayTimer = null; }
+  document.getElementById('replay-overlay').classList.remove('show');
+}
+
 init();
+document.getElementById('btn-replay-close').addEventListener('click', closeReplay);
+document.getElementById('btn-replay-close2').addEventListener('click', closeReplay);
 </script>
 </body>
 </html>

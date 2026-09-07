@@ -35,7 +35,7 @@ h1{font-size:26px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
   <h1>📚 事件图鉴</h1>
   <p class="sub">高中生涯模拟器 · 全部事件、选项数值与概率一览</p>
   <div id="events"></div>
-  <p class="footer-note">数值为原始效果,实际生效值 = 显示值 × 难度系数(快进 1.25,其余 1)<br>生成于 <span id="build-time">2026/9/7 20:32:35</span><br><a href="index.html" style="color:#718096">← 返回游戏主页</a></p>
+  <p class="footer-note">数值为原始效果,实际生效值 = 显示值 × 难度系数(快进 1.25,其余 1)<br>生成于 <span id="build-time">2026/9/7 21:31:42</span><br><a href="index.html" style="color:#718096">← 返回游戏主页</a></p>
 </div>
 <script>
 'use strict';
@@ -734,10 +734,13 @@ function createGame(seed, diffId, originId){
     stats.contest = clamp(Math.round(talent*0.55 - 10) + 8, 10, 55);
     flags.contest_enabled = true;
   }
+  // 学期数值历史快照(供结局页画曲线;纯记录,不消耗 RNG,不影响确定性)
+  var hist0 = {sem:0, stats:{}};
+  for(var hk in stats) hist0.stats[hk] = stats[hk];
   return {
     seed: seed>>>0, diff: diffId, origin: originId, originObj: o,
     stats: stats, flags: flags, sem: 0, used: [], log: [], scores: [], counts: {},
-    school: genSchoolName(rng), rng: rng,
+    history: [hist0], school: genSchoolName(rng), rng: rng,
   };
 }
 
@@ -896,6 +899,10 @@ function runExam(g){
     }
   }
   g.scores.push({sem:g.sem, score:score, gaokao:isGaokao});
+  // 学期末快照(考试反馈已生效)
+  var snap = {sem:g.sem, stats:{}};
+  for(var sk in g.stats) snap.stats[sk] = g.stats[sk];
+  g.history.push(snap);
   return {score:score, isGaokao:isGaokao, delta:delta, notes:notes, bonuses:eb.bonuses};
 }
 

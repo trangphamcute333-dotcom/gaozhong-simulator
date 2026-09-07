@@ -27,6 +27,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 全成就庆祝:在 `saveEndingRecord` 里检测最后一个结局解锁后 0.9s 弹 `showCelebration`;启动时对「更新前就已全成就」的玩家补触发一次。庆祝弹层 + 彩带动画在 `#celebrate-overlay`。
 - 配色主题用**覆盖式 CSS**:不引入 CSS 变量,保留默认绿色规则,追加 `body.theme-gold` 开头的覆盖规则(金色 #b7791f/#fffbeb/#f6e05e)。新增主题或调色时,同步改三处:CSS 覆盖块、`drawCard` 里 canvas 的条件色(用 `isGoldTheme()`)、`doEnding` 的内联颜色。主页「🎨 配色」按钮仅全成就后显示。
 
+## 结局页/分享/多周目(UI 层)
+
+- 结局页:三年数值曲线 `renderTrend`(数据源 `G.history`,引擎在 `createGame`/`runExam` 记录快照,**不消耗 RNG**,不影响确定性)+ 人生时间线 `renderTimeline`(数据源 `G.log`)。
+- URL 分享:`?seed=12@rich@fast` 启动时解析(带出身/难度直接开局,纯数字填入输入框,彩蛋号同样生效);结局页「分享链接」按钮复制该链接,实现在启动 IIFE 与 `btn-share` 处理器。
+- 传承加成(New Game+):全成就后出身选择页出现勾选框(天赋+3/金钱+10/健康+5,默认关),`G.ngp` 标记并写入档案;**勾选会改变种子结果**,复现筛选器种子时勿勾选。
+- 筛选器结果有「▶ 回放」按钮:按该种子当时的策略复现整局,逐步展示选择/数值变化/考试/结局(实现在 filter.template.html 的 `replayCollect`/`startReplay`,改回放逻辑后要重建生成页)。
+
 ## 数值平衡的改法
 
 - `ENDINGS` 按数组顺序取第一个满足者(优先级),改阈值会改变结局分布。
@@ -36,6 +43,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 验证手法(无测试套件)
 
 - `node build-filter.js` 重建筛选器页。
+- **`node verify.js [种子数]`** 回归验证:生成页引擎一致性 + simGame 差分(2000 局应为 0 不匹配)+ 各结局可达性统计。改引擎后必跑。
 - 提取页面 `<script>` 内容后 `node --check` 做语法校验。
 - node 里 `eval(引擎块 + 测试代码)` 跑差分测试/达成率统计(注意引擎块开头有 `'use strict'`,eval 作用域内定义,测试代码要拼在同一个 eval 字符串里)。
 - UI 层函数冒烟测试:从 index.html 用正则提取目标函数文本,配最小 `document`/`localStorage` stub 后 eval(本会话用此法验证过 `trySeedEgg`、`applyTheme`、`allEndingsUnlocked`)。
