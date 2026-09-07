@@ -132,6 +132,36 @@ h1{font-size:29px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
 .help-block b{color:#2d3748}
 .small-link{font-size:12.5px;color:#718096;text-align:center;margin-top:14px}
 .footer-note{text-align:center;color:#a0aec0;font-size:12px;margin-top:26px}
+/* 全成就奖励:金色典藏配色(覆盖式主题,原样保留默认绿色规则) */
+body.theme-gold{background:linear-gradient(180deg,#fdf6e3 0%,#f3e9cf 100%)}
+body.theme-gold .btn.primary{background:#b7791f;box-shadow:0 3px 10px rgba(183,121,31,.35)}
+body.theme-gold .btn.primary:active{background:#8a5a13}
+body.theme-gold .btn.ghost{color:#b7791f;border-color:#b7791f}
+body.theme-gold .btn.ghost:active{background:#fffbeb}
+body.theme-gold .diff-btn.sel{background:#fffbeb;border-color:#b7791f;color:#8a5a13}
+body.theme-gold .seed-row input:focus{border-color:#b7791f}
+body.theme-gold .origin-card.sel{border-color:#b7791f;background:#fffbeb;box-shadow:0 3px 12px rgba(183,121,31,.3)}
+body.theme-gold .sem-badge{background:#b7791f}
+body.theme-gold .dot.done{background:#b7791f}
+body.theme-gold .delta-chip.up{color:#8a5a13}
+body.theme-gold .opt-btn:active:not(:disabled){border-color:#b7791f;background:#fffbeb}
+body.theme-gold .exam-score{color:#b7791f}
+body.theme-gold .name-row input:focus{border-color:#b7791f}
+body.theme-gold .roll-window.hit{border-color:#b7791f;background:#fffbeb;color:#8a5a13}
+body.theme-gold .roll-row.active{background:#fffbeb;border-color:#b7791f;color:#8a5a13}
+body.theme-gold .roll-row.hit{background:#f6e05e;border-color:#b7791f}
+body.theme-gold .roll-result{color:#b7791f}
+body.theme-gold .end-item.unlocked{background:#fffbeb;border-color:#f6e05e}
+/* 全成就庆祝弹层 */
+#celebrate-overlay{position:fixed;inset:0;background:rgba(26,32,44,.62);display:none;align-items:center;justify-content:center;z-index:70;padding:16px}
+#celebrate-overlay.show{display:flex}
+#celebrate-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.confetti{position:absolute;top:-20px;animation:confetti-fall linear forwards}
+@keyframes confetti-fall{to{transform:translateY(110vh) rotate(720deg)}}
+.celebrate-card{background:#fff;border-radius:20px;max-width:420px;width:100%;padding:28px 20px 20px;text-align:center;box-shadow:0 12px 44px rgba(0,0,0,.35);animation:fadein .35s ease}
+.celebrate-title{font-size:24px;font-weight:800;margin-top:8px;color:#2d3748}
+.celebrate-sub{font-size:14px;color:#718096;margin-top:8px;line-height:1.8}
+.celebrate-reward{font-size:14px;color:#b7791f;font-weight:700;margin-top:12px;background:#fffbeb;border:1.5px dashed #f6e05e;border-radius:10px;padding:8px}
 </style>
 </head>
 <body>
@@ -155,6 +185,7 @@ h1{font-size:29px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
       <button class="btn ghost" id="btn-endings">📖 结局图鉴</button>
       <button class="btn ghost" id="btn-records">🗂 生涯档案</button>
       <button class="btn ghost" id="btn-help">❓ 玩法说明</button>
+      <button class="btn ghost" id="btn-theme" style="display:none">🎨 配色:绿野原色</button>
     </div>
     <p class="footer-note">纯前端小游戏 · 数据保存在本机浏览器</p>
   </div>
@@ -225,6 +256,19 @@ h1{font-size:29px;text-align:center;margin:10px 0 6px;letter-spacing:1px}
     <button class="modal-close" id="modal-close">✕</button>
     <div class="modal-title" id="modal-title"></div>
     <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- 全成就庆祝 -->
+<div id="celebrate-overlay">
+  <div id="celebrate-confetti"></div>
+  <div class="celebrate-card">
+    <div style="font-size:54px">🏆</div>
+    <div class="celebrate-title">全成就达成!</div>
+    <div class="celebrate-sub" id="celebrate-sub"></div>
+    <div class="celebrate-reward">🎁 奖励解锁:界面「金色典藏」配色</div>
+    <button class="btn primary" id="btn-celebrate-gold" style="margin-top:16px">🎨 换上金色典藏</button>
+    <button class="btn ghost" id="btn-celebrate-keep" style="width:100%;margin-top:10px">保持原样</button>
   </div>
 </div>
 
@@ -1212,6 +1256,42 @@ var store = {
   set: function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
 };
 
+// ---------- 全成就庆祝与金色典藏配色 ----------
+function allEndingsUnlocked(){
+  return Object.keys(store.get('hs_sim.endings', {})).length >= ENDINGS.length;
+}
+function isGoldTheme(){ return document.body.classList.contains('theme-gold'); }
+function applyTheme(id){
+  var gold = (id === 'gold');
+  document.body.classList.toggle('theme-gold', gold);
+  store.set('hs_sim.theme', gold ? 'gold' : 'green');
+  var b = document.getElementById('btn-theme');
+  if(b) b.textContent = '🎨 配色:' + (gold ? '金色典藏' : '绿野原色');
+}
+function spawnConfetti(){
+  var box = document.getElementById('celebrate-confetti');
+  box.innerHTML = '';
+  var emojis = ['🎉','✨','🎊','⭐','💛','🌟'];
+  for(var i=0;i<40;i++){
+    var s = document.createElement('span');
+    s.className = 'confetti';
+    s.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    s.style.left = Math.floor(Math.random()*100) + '%';
+    s.style.fontSize = (12 + Math.floor(Math.random()*16)) + 'px';
+    s.style.animationDuration = (2.5 + Math.random()*3) + 's';
+    s.style.animationDelay = (Math.random()*1.2) + 's';
+    box.appendChild(s);
+  }
+  setTimeout(function(){ box.innerHTML = ''; }, 6000);
+}
+function showCelebration(){
+  store.set('hs_sim.all_celebrated', true);
+  document.getElementById('celebrate-sub').innerHTML = '已解锁全部 <b>'+ENDINGS.length+'</b> 个结局<br>谢谢你陪主角走完每一段高中人生';
+  spawnConfetti();
+  document.getElementById('celebrate-overlay').classList.add('show');
+}
+function hideCelebration(){ document.getElementById('celebrate-overlay').classList.remove('show'); }
+
 function $(sel){ return document.querySelector(sel); }
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
@@ -1289,6 +1369,15 @@ function initHome(){
   document.getElementById('btn-endings').addEventListener('click', openEndingsModal);
   document.getElementById('btn-records').addEventListener('click', openRecordsModal);
   document.getElementById('btn-help').addEventListener('click', openHelpModal);
+  // 全成就后显示配色切换按钮
+  var themeBtn = document.getElementById('btn-theme');
+  if(allEndingsUnlocked()){
+    themeBtn.style.display = '';
+    applyTheme(store.get('hs_sim.theme', 'green'));
+    themeBtn.addEventListener('click', function(){
+      applyTheme(isGoldTheme() ? 'green' : 'gold');
+    });
+  }
 }
 
 // ---------- 出身选择 ----------
@@ -1548,6 +1637,10 @@ function saveEndingRecord(ending, score){
   records.unshift({seed:G.seed, diff:G.diff, origin:G.origin, ending:ending.id, score:score, t:Date.now()});
   if(records.length>30) records.length = 30;
   store.set('hs_sim.records', records);
+  // 全成就检测:解锁最后一个结局后,弹出庆祝界面
+  if(allEndingsUnlocked() && !store.get('hs_sim.all_celebrated', false)){
+    setTimeout(showCelebration, 900);
+  }
 }
 function doEnding(r){
   var ending = determineEnding(G, r.score);
@@ -1555,7 +1648,7 @@ function doEnding(r){
   saveEndingRecord(ending, r.score);
   $('#ending-icon').textContent = ending.icon;
   $('#ending-name').textContent = ending.name;
-  $('#ending-desc').innerHTML = '<b style="color:#2f855a">🎓 高考总分 '+r.score+' 分</b> · '+rankText(r.score,true)+'<br><br>'+ending.desc;
+  $('#ending-desc').innerHTML = '<b style="color:'+(isGoldTheme()?'#b7791f':'#2f855a')+'">🎓 高考总分 '+r.score+' 分</b> · '+rankText(r.score,true)+'<br><br>'+ending.desc;
   $('#name-input').value = '';
   drawCard('');
   showScreen('screen-ending');
@@ -1595,6 +1688,7 @@ function rr(ctx, x, y, w, h, r){
 }
 function drawCard(name){
   var W = 720, H = 1200, S = 2;
+  var gold = isGoldTheme();
   var cv = cardCanvas;
   cv.width = W*S; cv.height = H*S;
   var ctx = cv.getContext('2d');
@@ -1606,10 +1700,10 @@ function drawCard(name){
   var bg = ctx.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, '#fffdf4'); bg.addColorStop(1, '#e7f2ea');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(47,133,90,.05)'; ctx.beginPath(); ctx.arc(W, 0, 280, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = gold ? 'rgba(183,121,31,.06)' : 'rgba(47,133,90,.05)'; ctx.beginPath(); ctx.arc(W, 0, 280, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = 'rgba(221,107,32,.04)'; ctx.beginPath(); ctx.arc(0, H, 320, 0, Math.PI*2); ctx.fill();
   // 顶部横幅
-  ctx.fillStyle = '#2f855a'; ctx.fillRect(0, 0, W, 140);
+  ctx.fillStyle = gold ? '#b7791f' : '#2f855a'; ctx.fillRect(0, 0, W, 140);
   ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(0, 100, W, 40);
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#fff'; ctx.font = 'bold 42px '+FONT;
@@ -1635,7 +1729,7 @@ function drawCard(name){
   // 高考分数
   ctx.fillStyle = '#4a5568'; ctx.font = '24px '+FONT;
   ctx.fillText(last ? '高考总分' : '未能参加高考', W/2, 414);
-  ctx.fillStyle = '#2f855a'; ctx.font = 'bold 96px '+FONT;
+  ctx.fillStyle = gold ? '#b7791f' : '#2f855a'; ctx.font = 'bold 96px '+FONT;
   var sc = last ? String(last.score) : '—';
   ctx.fillText(sc, W/2 - 26, 508);
   if(last){
@@ -1697,6 +1791,8 @@ function openModal(title, html){
 function closeModal(){ $('#modal-overlay').classList.remove('show'); }
 $('#modal-close').addEventListener('click', closeModal);
 $('#modal-overlay').addEventListener('click', function(e){ if(e.target === this) closeModal(); });
+document.getElementById('btn-celebrate-gold').addEventListener('click', function(){ applyTheme('gold'); hideCelebration(); });
+document.getElementById('btn-celebrate-keep').addEventListener('click', hideCelebration);
 
 function openEndingsModal(){
   var endings = store.get('hs_sim.endings', {});
@@ -1731,7 +1827,7 @@ function openRecordsModal(){
 }
 function openHelpModal(){
   openModal('❓ 玩法说明',
-  '<div class="help-block"><b>🎯 目标</b><br>在高中六个学期里面对各种事件做出选择,经营你的六个数值,最终在高考揭晓你的结局。共有 '+ENDINGS.length+' 个结局等你解锁。</div>'+
+  '<div class="help-block"><b>🎯 目标</b><br>在高中六个学期里面对各种事件做出选择,经营你的六个数值,最终在高考揭晓你的结局。共有 '+ENDINGS.length+' 个结局等你解锁;集齐全部结局会解锁「金色典藏」界面配色,主页可切换。</div>'+
   '<div class="help-block"><b>📊 七个数值</b><br>🧬天赋(基本恒定,决定成长速度)· 📖成绩(决定高考结果)· 🏆竞赛(走竞赛路线后启用)· 💰金钱(门控消费类选项)· 🤝关系(影响学习状态与考试发挥,过低容易被霸凌)· ⭐知名度(≥60 时放大关系加成 ×1.5)· ❤️健康心态(过低会出问题,也影响考试发挥)。数值范围 0~100。</div>'+
   '<div class="help-block"><b>⚠️ 心理与霸凌</b><br>关系太低可能遭遇小团体针对;恋爱中关系低还可能被造谣群嘲。心情长期过低会触发心理预警,花钱就医可以治疗(但成绩仍会下滑);不治疗且心态彻底崩溃时,故事会提前结束——主角没能等到高考。</div>'+
   '<div class="help-block"><b>📅 学期</b><br>每学期会遇到若干事件(数量由难度决定),每个选择都会改变数值;学期末有考试,发挥好坏会反馈到成绩。特殊节点:高一下选科、高二会考、高三一模,以及最后的<b>高考</b>。</div>'+
@@ -1742,6 +1838,12 @@ function openHelpModal(){
 
 // ---------- 启动 ----------
 initHome();
+// 应用已保存的配色(全成就奖励)
+applyTheme(store.get('hs_sim.theme', 'green'));
+// 本次更新前就已全成就的玩家,首次打开补一次庆祝
+if(allEndingsUnlocked() && !store.get('hs_sim.all_celebrated', false)){
+  setTimeout(showCelebration, 1200);
+}
 
 </script>
 </body>
