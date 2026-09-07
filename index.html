@@ -1250,6 +1250,11 @@ function initHome(){
   });
   document.getElementById('btn-start').addEventListener('click', function(){
     var v = document.getElementById('seed-input').value.trim();
+    // 🥚 彩蛋:输入特定种子号,直达种子筛选器
+    if(v === '20070401' || v === '20070108'){
+      window.location.href = '种子筛选器.html';
+      return;
+    }
     // 种子筛选器复现码:种子@出身@难度(例如 12@rich@fast),按此配置直接开局,保证结果可复现
     var m = v.match(/^(\d{1,9})@([a-z_]+)@([a-z_]+)$/);
     if(m && originIdValid(m[2]) && DIFF[m[3]]){
